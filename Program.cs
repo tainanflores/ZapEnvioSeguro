@@ -5,7 +5,7 @@ using ZapEnvioSeguro.Forms;
 /*
 
 dotnet publish -c Release --self-contained -r win-x64 -o .\publish
-vpk pack -u com.zapenvioseguro -v 0.0.1 -p .\publish -e ZapEnvioSeguro.exe --packTitle ZapEnvioSeguro -i ./Resources/zapenvioseguro_ico.ico -s ./Resources/zapenvioseguro_splash.png 
+vpk pack -u com.teadigital.zapenvioseguro -v 0.0.1 -p .\publish -e ZapEnvioSeguro.exe --packTitle ZapEnvioSeguro -i ./Resources/zapenvioseguro_ico.ico -s ./Resources/zapenvioseguro_splash.png 
 
 */////
 
