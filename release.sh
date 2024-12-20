@@ -11,7 +11,7 @@ VERSION=$1
 BRANCH=$2
 COMMENT=$3
 
-# Adicionar mudanças ao Git
+# Adicionar mudanças a o Git
 echo "Adicionando mudanças ao Git..."
 git add .
 
