@@ -20,11 +20,7 @@ jobs:
           echo Version: $VERSION
           echo "VERSION=$VERSION" >> $GITHUB_ENV
         shell: bash
-
-      # Use version in other step
-      - name: Read version
-        run: echo Version now is ${VERSION}
-
+      
       - name: Install .NET
         uses: actions/setup-dotnet@v4
         with:
