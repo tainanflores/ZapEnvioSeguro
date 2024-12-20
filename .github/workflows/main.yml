@@ -1,0 +1,86 @@
+name: Build and Release Installer
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  deploy-to-github-releases:
+    runs-on: windows-latest
+    steps:
+    
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Remover o 'v' da tag        
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Publish Application
+        run: dotnet publish -c Release --self-contained -r win-x64 -o .\publish
+
+      - name: Create Velopack Release
+        run: |
+          dotnet tool install -g vpk
+          vpk download github --repoUrl https://github.com/tainanflores/ZapEnvioSeguro --token ${{ secrets.GITHUB_TOKEN }}
+          vpk pack -u MyUniqueIdentifier -v ${{ env.VERSION}} -p publish
+          vpk upload github --repoUrl https://github.com/tainanflores/ZapEnvioSeguro --publish --releaseName "ZapEnvioSeguro ${{ env.CLEAN_VERSION }}" --tag ${{ github.ref_name }} --token ${{ secrets.GITHUB_TOKEN }}
+
+        # Criar tag no repositório  público
+      - name: Create Tag in Public Repo
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Configurações
+          $repoPublic = "tainanflores/ZapEnvioSeguroUpdates"
+          $tagName = "${{ github.ref_name }}"
+
+          # Criar a tag no repositório público
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git clone --depth=1 https://x-access-token:$secrets.GITHUB_TOKEN@github.com/$repoPublic.git repo-public
+          cd repo-public
+          git tag $tagName
+          git push origin $tagName
+          cd ..
+
+      # Upload da release para o repositório público
+      - name: Upload Release to Public Repo
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Configurações
+          $repoPublic = "tainanflores/ZapEnvioSeguroUpdates"
+          $tagName = "${{ github.ref_name }}"
+          $releaseName = "Release $tagName"
+
+          # Criar release no repositório público
+          $releaseResponse = Invoke-RestMethod -Uri "https://api.github.com/repos/$repoPublic/releases" `
+                                              -Method POST `
+                                              -Headers @{Authorization = "token $secrets.GITHUB_TOKEN"; "Accept" = "application/vnd.github.v3+json"} `
+                                              -Body (@{tag_name = $tagName; name = $releaseName; body = "Nova versão disponível!"; draft = $false; prerelease = $false} | ConvertTo-Json -Depth 10)
+
+          # Obter o ID da release pública
+          $releaseId = $releaseResponse.id
+
+          # Fazer upload dos arquivos para a release pública
+          $files = @("Releases/assets.win", "Releases/com.zapenvioseguro-0.0.1-full", "Releases/com.zapenvioseguro-win-Portable.zip", "Releases/com.zapenvioseguro-win-Setup.exe", "Releases/RELEASES", "Releases/releases.win.json")
+          foreach ($file in $files) {
+            if (Test-Path $file) {
+              $fileName = [System.IO.Path]::GetFileName($file)
+              Invoke-RestMethod -Uri "https://uploads.github.com/repos/$repoPublic/releases/$releaseId/assets?name=$fileName" `
+                                -Method POST `
+                                -Headers @{Authorization = "token $secrets.GITHUB_TOKEN"; "Content-Type" = "application/octet-stream"} `
+                                -InFile $file
+            } else {
+              Write-Host "File not found: $file"
+              exit 1
+            }
+          }
+
