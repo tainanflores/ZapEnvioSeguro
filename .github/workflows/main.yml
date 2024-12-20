@@ -18,7 +18,7 @@ jobs:
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
 
       - name: Print VERSION to Console
-        run: echo "VERSION IS- $VERSION"
+        run: echo "VERSION IS- ${{ env.VERSION }}"
 
       - name: Install .NET
         uses: actions/setup-dotnet@v4
