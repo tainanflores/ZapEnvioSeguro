@@ -15,16 +15,13 @@ COMMENT=$3
 echo "Adicionando mudanças ao Git..."
 git add .
 
-
-# Criar uma tag anotada
-echo "Criando tag $VERSION..."
-git tag -a "$VERSION" -m "Release $VERSION"
-
-
 # Fazer commit com a mensagem fornecida
 echo "Criando commit..."
 git commit -m "$COMMENT"
 
+# Criar uma tag anotada
+echo "Criando tag $VERSION..."
+git tag -a "$VERSION" -m "Release $VERSION"
 
 # Enviar mudanças para a branch especificada
 echo "Enviando para a branch $BRANCH..."
