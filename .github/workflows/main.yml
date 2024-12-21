@@ -41,6 +41,7 @@ jobs:
         with:
           repository: tainanflores/ZapEnvioSeguroUpdates
           token: ${{ secrets.GITHUB_TOKEN }}
+          clean: false
 
       - name: Copy Releases to Updates Repository
         run: |
@@ -49,5 +50,5 @@ jobs:
           git add .
           git commit -m "Release version ${{ env.VERSION }}"
           git tag -a v${{ env.VERSION }} -m "Release version ${{ env.VERSION }}"
-          git push origin main --tags
+          git push origin master --tags
         shell: bash
