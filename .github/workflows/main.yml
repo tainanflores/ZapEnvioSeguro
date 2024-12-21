@@ -35,20 +35,5 @@ jobs:
           vpk download github --repoUrl https://github.com/tainanflores/ZapEnvioSeguro --token ${{ secrets.GITHUB_TOKEN }}
           vpk pack -u ZapEnvioSeguro -v ${{ env.VERSION }} -p publish
           vpk upload github --repoUrl https://github.com/tainanflores/ZapEnvioSeguro --publish --releaseName "ZapEnvioSeguro ${{ env.VERSION }}" --tag v${{ env.VERSION }} --token ${{ secrets.GITHUB_TOKEN }}
-        
-      - name: Checkout Updates Repository
-        uses: actions/checkout@v4
-        with:
-          repository: tainanflores/ZapEnvioSeguroUpdates
-          token: ${{ secrets.GITHUB_TOKEN }}
-          clean: false
-
-      - name: Copy Releases to Updates Repository
-        run: |
-          rm -rf *
-          cp -r Releases/* ./
-          git add .
-          git commit -m "Release version ${{ env.VERSION }}"
-          git tag -a v${{ env.VERSION }} -m "Release version ${{ env.VERSION }}"
-          git push origin master --tags
-        shell: bash
+          vpk upload github --repoUrl https://github.com/tainanflores/ZapEnvioSeguroUpdates --publish --releaseName "ZapEnvioSeguro ${{ env.VERSION }}" --tag v${{ env.VERSION }} --token ${{ secrets.GITHUB_TOKEN }}
+     
