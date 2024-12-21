@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+﻿using System.Data;
+using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using ZapEnvioSeguro.Classes;
 
 namespace ZapEnvioSeguro.Forms
@@ -78,7 +71,13 @@ namespace ZapEnvioSeguro.Forms
         {
             string nome = txtNome.Text;
             string telefone = txtTelefone.Text;
-            string sexo = cmbSexo.SelectedItem.ToString();
+            var sexo = cmbSexo.SelectedItem;
+
+            if(!ValidarTelefone(telefone))
+            {
+                MessageBox.Show("Número de telefone inválido. Certifique-se de usar o formato (12) 91234-5678.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
             if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(telefone))
             {
@@ -98,7 +97,7 @@ namespace ZapEnvioSeguro.Forms
                     {
                         new SqlParameter("@Nome", nome),
                         new SqlParameter("@Telefone", telefone),
-                        new SqlParameter("@Sexo", sexo)
+                        new SqlParameter("@Sexo", sexo == null ? "O" : sexo.ToString() )
                     };
                 }
                 else // Atualizar contato existente
@@ -108,7 +107,7 @@ namespace ZapEnvioSeguro.Forms
                     {
                         new SqlParameter("@Nome", nome),
                         new SqlParameter("@Telefone", telefone),
-                        new SqlParameter("@Sexo", sexo),
+                        new SqlParameter("@Sexo", sexo == null ? "O" : sexo.ToString()),
                         new SqlParameter("@Id", contatoId)
                     };
                 }
@@ -130,6 +129,7 @@ namespace ZapEnvioSeguro.Forms
                 MessageBox.Show($"Erro ao salvar o contato: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
         private void btnCancelar_Click(object sender, EventArgs e)
         {
@@ -200,6 +200,13 @@ namespace ZapEnvioSeguro.Forms
 
             // Coloca o cursor no final do texto
             txtTelefone.SelectionStart = cursorPosition;
+        }
+
+        static bool ValidarTelefone(string telefone)
+        {
+            // Expressão regular para o formato (99) 99999-9999
+            string pattern = @"^\(\d{2}\) \d{5}-\d{4}$";
+            return Regex.IsMatch(telefone, pattern);
         }
 
     }

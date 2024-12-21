@@ -130,7 +130,7 @@ namespace ZapEnvioSeguro
             searchTimer.Stop();
 
             // Executa a filtragem assíncrona
-            ApplyFiltersAsync();            
+            ApplyFiltersAsync();
 
             //chkSelecionarTodos.Checked = false;
         }
@@ -177,7 +177,7 @@ namespace ZapEnvioSeguro
 
         private void tabControl1_Selecting(object sender, TabControlCancelEventArgs e)
         {
-            if (enviarClicado && tabControl1.SelectedTab != tabMensagem)
+            if (enviarClicado && tabControl1.SelectedTab != tabEnviarMsg)
             {
                 var mensagem = $"Se você sair dessa tela irá limpar a mensagem digitada e os contatos confirmados. Deseja mesmo sair?";
                 var result = MessageBox.Show(mensagem, "Deseja mesmo sair?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
@@ -192,7 +192,7 @@ namespace ZapEnvioSeguro
                 }
                 else
                 {
-                    tabControl1.SelectedTab = tabMensagem;
+                    tabControl1.SelectedTab = tabEnviarMsg;
                 }
             }
 
@@ -239,7 +239,7 @@ namespace ZapEnvioSeguro
         private void chkSelecionarTodos_CheckedChanged(object sender, EventArgs e)
         {
             if (filtrandoContatos)
-            {               
+            {
                 return;
             }
 
@@ -573,7 +573,7 @@ namespace ZapEnvioSeguro
                 });
 
                 // Atualiza a lista filtrada
-                dataGridViewContatos.SuspendDrawing();                
+                dataGridViewContatos.SuspendDrawing();
 
                 try
                 {
@@ -1054,14 +1054,17 @@ namespace ZapEnvioSeguro
 
                 if (contacts == null) { return; };
 
+                int qtd = 0;
+
                 var contatoList = ConvertToContatoList(contacts);
-                int qtd = await ContarNovosContatos(contatoList);
+                qtd = await ContarNovosContatos(contatoList);
 
                 if (qtd > 0)
                 {
                     lbNovosContatos.Text = $"Foram encontrados {qtd.ToString()} novos contatos";
                     lbNovosContatos.Visible = true;
                     lbCliqueImportar.Visible = true;
+                    lbAnalisandoContatos.Visible = false;
                     btnSincronizarContatos.Enabled = true;
                 }
 
@@ -1204,6 +1207,7 @@ namespace ZapEnvioSeguro
 
                 lbNovosContatos.Visible = false;
                 lbCliqueImportar.Visible = false;
+                lbAnalisandoContatos.Visible = true;
                 btnSincronizarContatos.Enabled = false;
                 return;
 

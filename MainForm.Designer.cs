@@ -33,6 +33,7 @@
             tabWhatsApp = new TabPage();
             webView21 = new Microsoft.Web.WebView2.WinForms.WebView2();
             tabContatos = new TabPage();
+            lbAnalisandoContatos = new Label();
             panel2 = new Panel();
             dataGridViewContatos = new DataGridView();
             lbQtdFiltrados = new Label();
@@ -55,7 +56,7 @@
             label2 = new Label();
             label1 = new Label();
             txtBusca = new TextBox();
-            tabMensagem = new TabPage();
+            tabEnviarMsg = new TabPage();
             btConfirmarOpcoesMensagem = new Button();
             lbQuantidadeContatos = new Label();
             label3 = new Label();
@@ -82,7 +83,7 @@
             panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewContatos).BeginInit();
             panel1.SuspendLayout();
-            tabMensagem.SuspendLayout();
+            tabEnviarMsg.SuspendLayout();
             panelFiltroMensagem.SuspendLayout();
             SuspendLayout();
             // 
@@ -90,7 +91,7 @@
             // 
             tabControl1.Controls.Add(tabWhatsApp);
             tabControl1.Controls.Add(tabContatos);
-            tabControl1.Controls.Add(tabMensagem);
+            tabControl1.Controls.Add(tabEnviarMsg);
             tabControl1.Cursor = Cursors.Hand;
             tabControl1.Dock = DockStyle.Fill;
             tabControl1.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
@@ -130,6 +131,7 @@
             // 
             // tabContatos
             // 
+            tabContatos.Controls.Add(lbAnalisandoContatos);
             tabContatos.Controls.Add(panel2);
             tabContatos.Controls.Add(lbQtdFiltrados);
             tabContatos.Controls.Add(lbCliqueImportar);
@@ -150,6 +152,18 @@
             tabContatos.Text = "Contatos";
             tabContatos.UseVisualStyleBackColor = true;
             // 
+            // lbAnalisandoContatos
+            // 
+            lbAnalisandoContatos.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lbAnalisandoContatos.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lbAnalisandoContatos.ForeColor = SystemColors.MenuHighlight;
+            lbAnalisandoContatos.Location = new Point(620, 22);
+            lbAnalisandoContatos.Name = "lbAnalisandoContatos";
+            lbAnalisandoContatos.Size = new Size(300, 17);
+            lbAnalisandoContatos.TabIndex = 20;
+            lbAnalisandoContatos.Text = "Analisando contatos. Por favor aguarde...";
+            lbAnalisandoContatos.TextAlign = ContentAlignment.MiddleCenter;
+            // 
             // panel2
             // 
             panel2.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
@@ -165,10 +179,10 @@
             dataGridViewContatos.AllowUserToDeleteRows = false;
             dataGridViewContatos.AllowUserToResizeColumns = false;
             dataGridViewContatos.AllowUserToResizeRows = false;
+            dataGridViewContatos.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             dataGridViewContatos.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridViewContatos.BackgroundColor = SystemColors.ActiveCaption;
             dataGridViewContatos.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            dataGridViewContatos.Dock = DockStyle.Fill;
             dataGridViewContatos.EditMode = DataGridViewEditMode.EditOnKeystroke;
             dataGridViewContatos.Location = new Point(0, 0);
             dataGridViewContatos.MultiSelect = false;
@@ -176,7 +190,7 @@
             dataGridViewContatos.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
             dataGridViewContatos.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dataGridViewContatos.ShowEditingIcon = false;
-            dataGridViewContatos.Size = new Size(1260, 445);
+            dataGridViewContatos.Size = new Size(1256, 445);
             dataGridViewContatos.TabIndex = 5;
             dataGridViewContatos.CellContentClick += dataGridViewContatos_CellContentClick;
             dataGridViewContatos.CellValueNeeded += dataGridViewContatos_CellValueNeeded;
@@ -430,22 +444,22 @@
             txtBusca.TabIndex = 0;
             txtBusca.TextChanged += txtBusca_TextChanged;
             // 
-            // tabMensagem
+            // tabEnviarMsg
             // 
-            tabMensagem.Controls.Add(btConfirmarOpcoesMensagem);
-            tabMensagem.Controls.Add(lbQuantidadeContatos);
-            tabMensagem.Controls.Add(label3);
-            tabMensagem.Controls.Add(btCancelarOpcoesMensagem);
-            tabMensagem.Controls.Add(panelFiltroMensagem);
-            tabMensagem.Controls.Add(btnEnviar);
-            tabMensagem.Controls.Add(label6);
-            tabMensagem.Controls.Add(label7);
-            tabMensagem.Controls.Add(txtMensagem);
-            tabMensagem.Location = new Point(4, 26);
-            tabMensagem.Name = "tabMensagem";
-            tabMensagem.Size = new Size(1256, 651);
-            tabMensagem.TabIndex = 2;
-            tabMensagem.Text = "Enviar Mensagem";
+            tabEnviarMsg.Controls.Add(btConfirmarOpcoesMensagem);
+            tabEnviarMsg.Controls.Add(lbQuantidadeContatos);
+            tabEnviarMsg.Controls.Add(label3);
+            tabEnviarMsg.Controls.Add(btCancelarOpcoesMensagem);
+            tabEnviarMsg.Controls.Add(panelFiltroMensagem);
+            tabEnviarMsg.Controls.Add(btnEnviar);
+            tabEnviarMsg.Controls.Add(label6);
+            tabEnviarMsg.Controls.Add(label7);
+            tabEnviarMsg.Controls.Add(txtMensagem);
+            tabEnviarMsg.Location = new Point(4, 26);
+            tabEnviarMsg.Name = "tabEnviarMsg";
+            tabEnviarMsg.Size = new Size(1256, 651);
+            tabEnviarMsg.TabIndex = 2;
+            tabEnviarMsg.Text = "Enviar Mensagem";
             // 
             // btConfirmarOpcoesMensagem
             // 
@@ -697,8 +711,8 @@
             ((System.ComponentModel.ISupportInitialize)dataGridViewContatos).EndInit();
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
-            tabMensagem.ResumeLayout(false);
-            tabMensagem.PerformLayout();
+            tabEnviarMsg.ResumeLayout(false);
+            tabEnviarMsg.PerformLayout();
             panelFiltroMensagem.ResumeLayout(false);
             panelFiltroMensagem.PerformLayout();
             ResumeLayout(false);
@@ -726,7 +740,7 @@
         private Button btnEnviarMensagem;
         private TextBox txtDDD;
         private Microsoft.Web.WebView2.WinForms.WebView2 webView21;
-        public TabPage tabMensagem;
+        public TabPage tabEnviarMsg;
         private Label lbQuantidadeContatos;
         private Label label3;
         private Panel panelFiltroMensagem;
@@ -752,5 +766,6 @@
         private CheckBox chkBusinessMensagem;
         private CheckBox chkSemConversaMensagem;
         private Panel panel2;
+        private Label lbAnalisandoContatos;
     }
 }

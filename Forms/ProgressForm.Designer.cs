@@ -91,7 +91,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            BackColor = SystemColors.ActiveCaption;
+            BackColor = SystemColors.WindowFrame;
             ClientSize = new Size(384, 111);
             Controls.Add(btnCancelarProcesso);
             Controls.Add(labelStatus);
