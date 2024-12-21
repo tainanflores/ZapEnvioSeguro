@@ -33,7 +33,13 @@ jobs:
         run: |
           dotnet tool install -g vpk
           vpk download github --repoUrl https://github.com/tainanflores/ZapEnvioSeguro --token ${{ secrets.GITHUB_TOKEN }}
-          vpk pack -u ZapEnvioSeguro -v ${{ env.VERSION }} -p publish
+          vpk pack -u com.teadigital.zapenvioseguro -v ${{ env.VERSION }} -p publish -e ZapEnvioSeguro.exe --packTitle ZapEnvioSeguro -i ./Resources/zapenvioseguro_ico.ico -s ./Resources/zapenvioseguro_splash.png 
           vpk upload github --repoUrl https://github.com/tainanflores/ZapEnvioSeguro --publish --releaseName "ZapEnvioSeguro ${{ env.VERSION }}" --tag v${{ env.VERSION }} --token ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Create Velopack Release
+        run: |
+          dotnet tool install -g vpk
+          vpk download github --repoUrl https://github.com/tainanflores/ZapEnvioSeguro --token ${{ secrets.GITHUB_TOKEN }}
+          vpk pack -u com.teadigital.zapenvioseguro -v ${{ env.VERSION }} -p publish -e ZapEnvioSeguro.exe --packTitle ZapEnvioSeguro -i ./Resources/zapenvioseguro_ico.ico -s ./Resources/zapenvioseguro_splash.png 
           vpk upload github --repoUrl https://github.com/tainanflores/ZapEnvioSeguroUpdates --publish --releaseName "ZapEnvioSeguro ${{ env.VERSION }}" --tag v${{ env.VERSION }} --token ${{ secrets.GITHUB_TOKEN }}
      
