@@ -45,7 +45,7 @@ jobs:
       - name: Copy Releases to Updates Repository
         run: |
           rm -rf *
-          cp -r ../Releases/* ./
+          cp -r Releases/* ./
           git add .
           git commit -m "Release version ${{ env.VERSION }}"
           git tag -a v${{ env.VERSION }} -m "Release version ${{ env.VERSION }}"
