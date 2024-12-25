@@ -44,7 +44,7 @@ namespace ZapEnvioSeguro
 
         private static long telefoneIdEnviando;
 
-        private const int timeoutSeconds = 20;
+        private const int timeoutSeconds = 15;
 
         public MainForm()
         {
@@ -111,7 +111,7 @@ namespace ZapEnvioSeguro
             {
                 isSendingMessage = true;
 
-                searchTimer.Start();
+                SendTimer.Start();
             }
             else
             {
@@ -262,6 +262,7 @@ namespace ZapEnvioSeguro
                 var contatoId = (long)row.Cells["ID"].Value;
                 var contato = contatosList.First(c => c.Id == contatoId); // Encontra o contato na lista
                 contato.Selecionado = selecionarTodos;
+                lbQtdSelcionados.Text = $"{contatosList.Count(c => c.Selecionado).ToString()} selecionados";
 
                 if (selecionarTodos)
                 {
@@ -307,6 +308,7 @@ namespace ZapEnvioSeguro
                 {
                     // Alterar a cor de fundo da linha
                     row.DefaultCellStyle.BackColor = Color.LightGreen; // Cor quando marcado
+                    
                 }
                 else
                 {
@@ -367,6 +369,8 @@ namespace ZapEnvioSeguro
             {
                 var row = dataGridViewContatos.Rows[e.RowIndex];
                 row.DefaultCellStyle.BackColor = contato.Selecionado ? Color.LightGreen : Color.White;
+                lbQtdSelcionados.Text = $"{contatosList.Count(c => c.Selecionado).ToString()} selecionados";
+
             }
         }
 
@@ -657,6 +661,7 @@ namespace ZapEnvioSeguro
                 var contatoId = (long)row.Cells["ID"].Value;
                 var contato = dataSource.First(c => c.Id == contatoId); // Encontra o contato correspondente
                 row.Cells["Selecionar"].Value = contato.Selecionado;
+                lbQtdSelcionados.Text = $"{contatosList.Count(c => c.Selecionado).ToString()} selecionados";
 
                 if (contato.Selecionado)
                 {

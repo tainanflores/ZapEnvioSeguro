@@ -33,6 +33,7 @@
             tabWhatsApp = new TabPage();
             webView21 = new Microsoft.Web.WebView2.WinForms.WebView2();
             tabContatos = new TabPage();
+            lbQtdSelcionados = new Label();
             lbAnalisandoContatos = new Label();
             panel2 = new Panel();
             dataGridViewContatos = new DataGridView();
@@ -142,6 +143,7 @@
             // 
             // tabContatos
             // 
+            tabContatos.Controls.Add(lbQtdSelcionados);
             tabContatos.Controls.Add(lbAnalisandoContatos);
             tabContatos.Controls.Add(panel2);
             tabContatos.Controls.Add(lbQtdFiltrados);
@@ -162,6 +164,19 @@
             tabContatos.TabIndex = 1;
             tabContatos.Text = "Contatos";
             tabContatos.UseVisualStyleBackColor = true;
+            // 
+            // lbQtdSelcionados
+            // 
+            lbQtdSelcionados.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lbQtdSelcionados.AutoSize = true;
+            lbQtdSelcionados.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lbQtdSelcionados.ForeColor = Color.LimeGreen;
+            lbQtdSelcionados.Location = new Point(937, 175);
+            lbQtdSelcionados.Name = "lbQtdSelcionados";
+            lbQtdSelcionados.Size = new Size(98, 17);
+            lbQtdSelcionados.TabIndex = 21;
+            lbQtdSelcionados.Text = "0 selecionados";
+            lbQtdSelcionados.TextAlign = ContentAlignment.MiddleRight;
             // 
             // lbAnalisandoContatos
             // 
@@ -214,7 +229,7 @@
             lbQtdFiltrados.AutoSize = true;
             lbQtdFiltrados.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lbQtdFiltrados.ForeColor = SystemColors.MenuHighlight;
-            lbQtdFiltrados.Location = new Point(917, 172);
+            lbQtdFiltrados.Location = new Point(791, 175);
             lbQtdFiltrados.Name = "lbQtdFiltrados";
             lbQtdFiltrados.Size = new Size(72, 17);
             lbQtdFiltrados.TabIndex = 18;
@@ -867,6 +882,7 @@
         private CheckBox chkSemConversaMensagem;
         private Panel panel2;
         private Label lbAnalisandoContatos;
+<<<<<<< HEAD
         private TabPage tabMsgEnviada;
         private Panel panel3;
         private DataGridView dataGridViewMensagens;
@@ -874,5 +890,8 @@
         private Label label14;
         private TextBox txtBuscaMsg;
         private Label label8;
+=======
+        private Label lbQtdSelcionados;
+>>>>>>> master
     }
 }
