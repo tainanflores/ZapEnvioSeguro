@@ -29,7 +29,7 @@ public class ApplicationDbContext : DbContext
             .HasDefaultValue(false);
         
         modelBuilder.Entity<Mensagens>()
-            .Property(c => c.QuatidadeContatosSucesso)
+            .Property(c => c.QuantidadeContatosSucesso)
             .HasDefaultValue(0);
     }
 }

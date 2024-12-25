@@ -1,12 +1,12 @@
 using System.Data;
 using System.Media;
-using ZapEnvioSeguro.Forms;
-using Microsoft.Web.WebView2.Core;
-using ZapEnvioSeguro.Classes;
-using Newtonsoft.Json;
-using ZapEnvioSeguro.Entidades;
 using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
+using Microsoft.Web.WebView2.Core;
+using Newtonsoft.Json;
+using ZapEnvioSeguro.Classes;
+using ZapEnvioSeguro.Entidades;
+using ZapEnvioSeguro.Forms;
 
 
 
@@ -19,11 +19,14 @@ namespace ZapEnvioSeguro
         private readonly WppConnect wppConnect = new WppConnect();
 
         private System.Windows.Forms.Timer searchTimer;
+        private System.Windows.Forms.Timer searchTimerMsg;
         private System.Windows.Forms.Timer SendTimer;
 
         public List<Contato> contatosList = new List<Contato>();
+        public List<Mensagens> mensagensList = new List<Mensagens>();
         public List<Contato> contatosSelecionadosParaEnvio = new List<Contato>();
         private List<Contato> contatosListVirtualFiltered = new List<Contato>();
+        private List<Mensagens> mensagensListVirtualFiltered = new List<Mensagens>();
 
         public static bool enviarClicado = false;
         public static bool wppInjetado = false;
@@ -77,6 +80,7 @@ namespace ZapEnvioSeguro
 
             // Adiciona as colunas necessárias (Selecionar, Editar, etc.)
             InitializeDataGridViewColumns();
+            InitializeDataGridViewColumnsMessages();
 
             // Opcional: Melhorar a performance desabilitando alguns comportamentos
             dataGridViewContatos.RowHeadersVisible = false;
@@ -88,7 +92,10 @@ namespace ZapEnvioSeguro
             // Inicializa o Timer para debounce na busca
             searchTimer = new System.Windows.Forms.Timer();
             searchTimer.Interval = 300; // Intervalo de 300 ms
-            searchTimer.Tick += SearchTimer_Tick;
+            searchTimer.Tick += SearchTimer_Tick;  
+            searchTimerMsg = new System.Windows.Forms.Timer();
+            searchTimerMsg.Interval = 300; // Intervalo de 300 ms
+            searchTimerMsg.Tick += SearchTimerMsg_Tick;
 
             await LoadContacts().ConfigureAwait(false);
             txtDDD.MaxLength = 2;
@@ -126,13 +133,17 @@ namespace ZapEnvioSeguro
 
         private void SearchTimer_Tick(object sender, EventArgs e)
         {
-            // Interrompe o Timer para evitar chamadas repetidas
             searchTimer.Stop();
 
-            // Executa a filtragem assíncrona
             ApplyFiltersAsync();
 
-            //chkSelecionarTodos.Checked = false;
+        }
+        private void SearchTimerMsg_Tick(object sender, EventArgs e)
+        {
+            searchTimerMsg.Stop();
+
+            ApplyFiltersAsyncMensagens();
+
         }
 
 
@@ -452,6 +463,7 @@ namespace ZapEnvioSeguro
                 dataGridViewContatos.Columns.Add(editButtonColumn);
             }
         }
+
         public async Task LoadContacts()
         {
             var query = $"SELECT " +
@@ -596,7 +608,6 @@ namespace ZapEnvioSeguro
                 MessageBox.Show($"Erro ao aplicar filtros: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
 
         public void UpdateDataGridView(List<Contato>? filteredContacts = null)
         {
@@ -1413,19 +1424,16 @@ namespace ZapEnvioSeguro
 
                 if (dataTable == null || dataTable.Rows.Count == 0)
                 {
-                    return contatoList.Count; // Se não houver contatos no banco, todos os contatos da lista são novos
+                    return contatoList.Count; 
                 }
 
-                // Cria um conjunto de telefones existentes no banco de dados
                 var telefonesExistentes = new HashSet<string>();
 
                 foreach (DataRow row in dataTable.Rows)
                 {
-                    // Adiciona o telefone encontrado no banco ao conjunto
                     telefonesExistentes.Add(row["Telefone"].ToString());
                 }
 
-                // Conta quantos contatos da lista não estão no banco
                 int contatosNaoExistentes = contatoList.Count(c => !telefonesExistentes.Contains(c.Telefone));
 
                 return contatosNaoExistentes;
@@ -1439,7 +1447,6 @@ namespace ZapEnvioSeguro
 
         private async void btnSincronizarContatos_Click(object sender, EventArgs e)
         {
-            // Passo 1: Exibir uma mensagem de confirmação
             var result = MessageBox.Show(
                 "Deseja sincronizar os contatos do WhatsApp e salvar a data da última mensagem recebida de cada contato?",
                 "Confirmar Sincronização",
@@ -1457,7 +1464,6 @@ namespace ZapEnvioSeguro
         {
             btnEnviar.Enabled = false;
             enviarClicado = false;
-            //tabControl1.SelectTab(0);
             ProgressForm progressForm = new ProgressForm();
 
             try
@@ -1599,10 +1605,8 @@ namespace ZapEnvioSeguro
                 return;
             }
 
-            // Remove caracteres não numéricos
             string apenasNumeros = Regex.Replace(telefone, @"\D", "");
 
-            // Adiciona o código do país "55" no início
             string telefoneFormatado = "55" + apenasNumeros;
 
             string url = $"https://wa.me/{telefoneFormatado}?text={Uri.EscapeDataString(mensagem)}";
@@ -1636,16 +1640,354 @@ namespace ZapEnvioSeguro
                 {
                     MessageBox.Show($"Erro ao executar script: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-
-                // Resetar a flag
-
             }
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            // Isso encerra o processo da aplicação ao fechar o MainForm
             Application.Exit();
         }
+
+        #region Tab Mensagens enviadas
+
+        private void dataGridViewMensagens_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.ColumnIndex == 0 && e.RowIndex >= 0) 
+            {
+                DataGridViewRow SelectedRow = dataGridViewMensagens.Rows[e.RowIndex];
+
+                if (Convert.ToBoolean(SelectedRow.Cells["Selecionar"].Value))
+                {
+                    foreach (DataGridViewRow row in dataGridViewMensagens.Rows)
+                    {
+                        row.Cells["Selecionar"].Value = false;
+                        var msgId = (long)row.Cells["ID"].Value;
+                        var contato = contatosList.First(c => c.Id == msgId); 
+                        contato.Selecionado = false;
+                        row.DefaultCellStyle.BackColor = Color.White;
+
+                    }
+                }
+                var mensagemId = (long)SelectedRow.Cells["ID"].Value;
+                var mensagem = mensagensList.First(m => m.Id == mensagemId);
+                mensagem.Selecionado = Convert.ToBoolean(SelectedRow.Cells["Selecionar"].Value);
+
+                if (Convert.ToBoolean(SelectedRow.Cells["Selecionar"].Value))
+                {
+                    SelectedRow.DefaultCellStyle.BackColor = Color.LightGreen; 
+
+                }
+                else
+                {                    
+                    SelectedRow.DefaultCellStyle.BackColor = Color.White; 
+                }
+            }
+        }
+
+        private void dataGridViewMensagens_CurrentCellDirtyStateChanged(object sender, EventArgs e)
+        {
+            if (dataGridViewMensagens.IsCurrentCellDirty)
+            {
+                dataGridViewMensagens.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            }
+        }
+
+        private void dataGridViewMensagens_CellValueNeeded(object sender, DataGridViewCellValueEventArgs e)
+        {
+            if (e.RowIndex >= mensagensListVirtualFiltered.Count)
+                return;
+
+            var contato = mensagensListVirtualFiltered[e.RowIndex];
+
+            switch (dataGridViewMensagens.Columns[e.ColumnIndex].Name)
+            {
+                case "Selecionar":
+                    e.Value = contato.Selecionado;
+                    break;
+                case "ID":
+                    e.Value = contato.Id;
+                    break;
+                case "Mensagem":
+                    e.Value = contato.Mensagem;
+                    break;
+                case "DataEnvio":
+                    e.Value = contato.DataEnvio.ToString("dd/MM/yyyy HH:mm") ?? "";
+                    break;
+                case "QtdContatosSolicitados":
+                    e.Value = contato.QuantidadeContatosSolicitados;
+                    break;
+                case "QtdContatosSucesso":
+                    e.Value = contato.QuantidadeContatosSucesso;
+                    break;
+                case "VerMensagem":
+                    e.Value = "Ver Mensagem";
+                    break;
+            }
+
+            if (dataGridViewMensagens.Columns[e.ColumnIndex].Name == "Selecionar")
+            {
+                var row = dataGridViewMensagens.Rows[e.RowIndex];
+                row.DefaultCellStyle.BackColor = contato.Selecionado ? Color.LightGreen : Color.White;
+            }
+        }
+
+        private void DataGridViewMensagens_CellValuePushed(object sender, DataGridViewCellValueEventArgs e)
+        {
+            if (e.RowIndex >= mensagensListVirtualFiltered.Count)
+                return;
+
+            var contato = mensagensListVirtualFiltered[e.RowIndex];
+
+            if (dataGridViewMensagens.Columns[e.ColumnIndex].Name == "Selecionar")
+            {
+                contato.Selecionado = Convert.ToBoolean(e.Value);
+
+                dataGridViewMensagens.InvalidateRow(e.RowIndex);
+            }
+        }
+
+        private void dataGridViewMensagens_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (dataGridViewMensagens.Columns[e.ColumnIndex].Name == "Selecionar")
+            {
+                var contato = mensagensList[e.RowIndex];
+                e.Value = contato.Selecionado;
+            }
+        }
+
+        private void dataGridViewMensagens_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
+                return;
+
+            if (dataGridViewMensagens.Columns[e.ColumnIndex].Name == "Ver Mensagem")
+            {
+                var mensagem = mensagensListVirtualFiltered[e.RowIndex];
+
+                if (e.ColumnIndex == dataGridViewMensagens.Columns["Editar"].Index && e.RowIndex >= 0)
+                {
+                    long mensagemId = mensagem.Id;
+
+                    VerMensagemForm mensagemForm = new VerMensagemForm(this, mensagemId);
+                    mensagemForm.StartPosition = FormStartPosition.CenterParent;
+
+                    mensagemForm.ShowDialog(this);
+                }
+            }
+        }
+
+        private void InitializeDataGridViewColumnsMessages()
+        {
+            dataGridViewMensagens.ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
+            {
+                Alignment = DataGridViewContentAlignment.MiddleCenter, 
+                Font = new Font("Segoe UI", 9, FontStyle.Bold), 
+                ForeColor = Color.White, 
+                BackColor = Color.Gray 
+            };
+
+            if (dataGridViewMensagens.Columns["Selecionar"] == null)
+            {
+                DataGridViewCheckBoxColumn selectColumn = new DataGridViewCheckBoxColumn
+                {
+                    Name = "Selecionar",
+                    HeaderText = "Selecionar",
+                    Width = 100,
+                    FalseValue = false,
+                    TrueValue = true,
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.None
+                };
+                dataGridViewMensagens.Columns.Add(selectColumn);
+            }
+
+            dataGridViewMensagens.Columns.Add(new DataGridViewTextBoxColumn { Name = "ID", HeaderText = "ID", ReadOnly = true, Width = 100, AutoSizeMode = DataGridViewAutoSizeColumnMode.None, DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter, } });
+            dataGridViewMensagens.Columns.Add(new DataGridViewTextBoxColumn { Name = "Mensagem", HeaderText = "Mensagem", ReadOnly = true, Width = 300 });
+            dataGridViewMensagens.Columns.Add(new DataGridViewTextBoxColumn { Name = "DataEnvio", HeaderText = "Data de Envio", ReadOnly = true, DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter } });
+            dataGridViewMensagens.Columns.Add(new DataGridViewTextBoxColumn { Name = "QtdContatosSelecionados", HeaderText = "Contatos Selecionados", ReadOnly = true, DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter, } });
+            dataGridViewMensagens.Columns.Add(new DataGridViewTextBoxColumn { Name = "QuantidadeContatosSucesso", HeaderText = "Envios com Sucesso", ReadOnly = true, DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter, } });
+
+            if (dataGridViewMensagens.Columns["VerMensagem"] == null)
+            {
+                DataGridViewButtonColumn editButtonColumn = new DataGridViewButtonColumn
+                {
+                    Name = "VerMensagem",
+                    HeaderText = "",
+                    Text = "Ver Mensagem",
+                    UseColumnTextForButtonValue = true,
+                    Width = 120,
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.None
+                };
+                dataGridViewMensagens.Columns.Add(editButtonColumn);
+            }
+        }
+
+        public async Task LoadMessages()
+        {
+            var query = $"SELECT " +
+                 $"Id, Mensagem, DataEnvio, QuantidadeContatosSolicitados, QuantidadeContatosSucesso, IdEmpresa " +
+                 $"FROM " +
+                 $"Mensagens " +
+                 $"WHERE IdEmpresa = @IdEmpresa";
+
+            SqlParameter[] parameters = new SqlParameter[]
+            {
+                new SqlParameter("@IdEmpresa", Evento.IdEmpresa)
+            };
+
+            try
+            {
+                var dataTable = await dbHelper.ExecuteQueryAsync(query, parameters);
+                mensagensList.Clear();
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    mensagensList.Add(new Mensagens
+                    {
+                        Id = (long)row["Id"],
+                        Mensagem = row["Mensagem"].ToString(),
+                        DataEnvio = (DateTime)row["DataEnvio"],
+                        QuantidadeContatosSolicitados = (long)row["QuantidadeContatosSolicitados"],
+                        QuantidadeContatosSucesso = (long)row["QuantidadeContatosSucesso"],
+                        IdEmpresa = (long)row["IdEmpresa"],
+                        Selecionado = false 
+                    });
+                }
+
+                mensagensListVirtualFiltered = new List<Mensagens>(mensagensList);
+
+                dataGridViewMensagens.SuspendDrawing();
+
+                try
+                {
+                    dataGridViewMensagens.RowCount = mensagensListVirtualFiltered.Count;
+                }
+                finally
+                {
+                    dataGridViewMensagens.ResumeDrawing();
+                    lbQtdFiltrados.Text = $"{mensagensListVirtualFiltered.Count.ToString()} Mensagens";
+                }
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao carregar Mensagens: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void ApplyFiltersAsyncMensagens()
+        {
+            try
+            {
+
+                string searchTerm = string.Empty;
+
+                if (txtBuscaMsg.InvokeRequired)
+                {
+                    txtBuscaMsg.Invoke(new MethodInvoker(delegate
+                    {
+                        searchTerm = txtBuscaMsg.Text.Trim().ToLower();
+                    }));
+                }
+                else
+                {
+                    searchTerm = txtBuscaMsg.Text.Trim().ToLower();
+                }
+
+                var filteredList = await Task.Run(() =>
+                {
+                    var query = mensagensList.AsQueryable();
+
+                    if (chkMsgComFalha.Checked)
+                    {
+                        query = query.Where(m => m.QuantidadeContatosSolicitados > m.QuantidadeContatosSucesso);
+                    }
+
+                    if (!string.IsNullOrEmpty(searchTerm))
+                    {
+                        query = query.Where(m => m.Mensagem.ToLower().Contains(searchTerm));
+                    }
+
+                    return query.ToList();
+                });
+
+                dataGridViewMensagens.SuspendDrawing();
+
+                try
+                {
+                    mensagensListVirtualFiltered = filteredList;
+                    dataGridViewMensagens.RowCount = mensagensListVirtualFiltered.Count;
+                }
+                finally
+                {
+                    dataGridViewMensagens.ResumeDrawing();
+                }
+
+                dataGridViewMensagens.Refresh();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao aplicar filtros: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        public void UpdateDataGridViewMensagens(List<Mensagens>? filteredMensages = null)
+        {
+            var dataSource = filteredMensages ?? mensagensList;
+
+            var dt = new DataTable();
+
+            dt.Columns.Add("ID", typeof(long));
+            dt.Columns.Add("Mensagem");
+            dt.Columns.Add("DataEnvio");
+            dt.Columns.Add("QtdContatosSolicitados");
+            dt.Columns.Add("QtdContatosSucesso");
+
+            foreach (var contato in dataSource)
+            {
+                dt.Rows.Add(
+                    contato.Id,
+                    contato.Mensagem,
+                    contato.DataEnvio.ToString("dd/MM/yyyy HH:mm"),
+                    contato.QuantidadeContatosSolicitados,
+                    contato.QuantidadeContatosSucesso
+                );
+            }
+
+            dataGridViewMensagens.DataSource = dt;
+
+            dataGridViewMensagens.ColumnHeadersDefaultCellStyle.Font = new Font(dataGridViewMensagens.ColumnHeadersDefaultCellStyle.Font, FontStyle.Bold);
+
+            foreach (DataGridViewColumn column in dataGridViewMensagens.Columns)
+            {
+                if (column.Name != "Selecionar")
+                {
+                    column.ReadOnly = true;
+                }
+            }
+
+            foreach (DataGridViewRow row in dataGridViewMensagens.Rows)
+            {
+                var messageId = (long)row.Cells["ID"].Value;
+                var message = dataSource.First(c => c.Id == messageId); 
+                row.Cells["Selecionar"].Value = message.Selecionado;
+
+                if (message.Selecionado)
+                {
+                    row.DefaultCellStyle.BackColor = Color.LightGreen; 
+                }
+                else
+                {
+                    row.DefaultCellStyle.BackColor = Color.White; 
+                }
+            }
+        }
+
+        private void txtBuscaMsg_TextChanged(object sender, EventArgs e)
+        {
+            searchTimerMsg.Stop();
+            searchTimerMsg.Start();
+        }
+
+        #endregion
     }
 }

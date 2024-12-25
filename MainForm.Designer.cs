@@ -76,6 +76,13 @@
             label6 = new Label();
             label7 = new Label();
             txtMensagem = new RichTextBox();
+            tabMsgEnviada = new TabPage();
+            label8 = new Label();
+            panel3 = new Panel();
+            dataGridViewMensagens = new DataGridView();
+            chkMsgComFalha = new CheckBox();
+            label14 = new Label();
+            txtBuscaMsg = new TextBox();
             tabControl1.SuspendLayout();
             tabWhatsApp.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)webView21).BeginInit();
@@ -85,6 +92,9 @@
             panel1.SuspendLayout();
             tabEnviarMsg.SuspendLayout();
             panelFiltroMensagem.SuspendLayout();
+            tabMsgEnviada.SuspendLayout();
+            panel3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridViewMensagens).BeginInit();
             SuspendLayout();
             // 
             // tabControl1
@@ -92,6 +102,7 @@
             tabControl1.Controls.Add(tabWhatsApp);
             tabControl1.Controls.Add(tabContatos);
             tabControl1.Controls.Add(tabEnviarMsg);
+            tabControl1.Controls.Add(tabMsgEnviada);
             tabControl1.Cursor = Cursors.Hand;
             tabControl1.Dock = DockStyle.Fill;
             tabControl1.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
@@ -688,6 +699,91 @@
             txtMensagem.TabIndex = 9;
             txtMensagem.Text = "";
             // 
+            // tabMsgEnviada
+            // 
+            tabMsgEnviada.Controls.Add(label8);
+            tabMsgEnviada.Controls.Add(panel3);
+            tabMsgEnviada.Controls.Add(chkMsgComFalha);
+            tabMsgEnviada.Controls.Add(label14);
+            tabMsgEnviada.Controls.Add(txtBuscaMsg);
+            tabMsgEnviada.Location = new Point(4, 26);
+            tabMsgEnviada.Name = "tabMsgEnviada";
+            tabMsgEnviada.Size = new Size(1256, 651);
+            tabMsgEnviada.TabIndex = 3;
+            tabMsgEnviada.Text = "Mensagens Enviadas";
+            tabMsgEnviada.UseVisualStyleBackColor = true;
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Font = new Font("Segoe UI", 27.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label8.Location = new Point(47, 23);
+            label8.Name = "label8";
+            label8.Size = new Size(378, 50);
+            label8.TabIndex = 33;
+            label8.Text = "Mensagens Enviadas";
+            // 
+            // panel3
+            // 
+            panel3.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            panel3.Controls.Add(dataGridViewMensagens);
+            panel3.Location = new Point(0, 154);
+            panel3.Name = "panel3";
+            panel3.Size = new Size(1260, 497);
+            panel3.TabIndex = 32;
+            // 
+            // dataGridViewMensagens
+            // 
+            dataGridViewMensagens.AllowUserToAddRows = false;
+            dataGridViewMensagens.AllowUserToDeleteRows = false;
+            dataGridViewMensagens.AllowUserToResizeColumns = false;
+            dataGridViewMensagens.AllowUserToResizeRows = false;
+            dataGridViewMensagens.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            dataGridViewMensagens.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridViewMensagens.BackgroundColor = SystemColors.ActiveCaption;
+            dataGridViewMensagens.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            dataGridViewMensagens.EditMode = DataGridViewEditMode.EditOnKeystroke;
+            dataGridViewMensagens.Location = new Point(-4, 0);
+            dataGridViewMensagens.MultiSelect = false;
+            dataGridViewMensagens.Name = "dataGridViewMensagens";
+            dataGridViewMensagens.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
+            dataGridViewMensagens.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dataGridViewMensagens.ShowEditingIcon = false;
+            dataGridViewMensagens.Size = new Size(1260, 497);
+            dataGridViewMensagens.TabIndex = 5;
+            // 
+            // chkMsgComFalha
+            // 
+            chkMsgComFalha.Cursor = Cursors.Hand;
+            chkMsgComFalha.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            chkMsgComFalha.Location = new Point(585, 111);
+            chkMsgComFalha.Name = "chkMsgComFalha";
+            chkMsgComFalha.Size = new Size(248, 25);
+            chkMsgComFalha.TabIndex = 14;
+            chkMsgComFalha.Text = "Somente mensagens com falhas";
+            chkMsgComFalha.UseVisualStyleBackColor = true;
+            // 
+            // label14
+            // 
+            label14.AutoSize = true;
+            label14.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label14.Location = new Point(13, 114);
+            label14.Name = "label14";
+            label14.Size = new Size(133, 17);
+            label14.TabIndex = 22;
+            label14.Text = "Procurar Mensagens";
+            // 
+            // txtBuscaMsg
+            // 
+            txtBuscaMsg.Cursor = Cursors.IBeam;
+            txtBuscaMsg.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtBuscaMsg.Location = new Point(152, 111);
+            txtBuscaMsg.Name = "txtBuscaMsg";
+            txtBuscaMsg.PlaceholderText = "Digite algum texto.. ";
+            txtBuscaMsg.Size = new Size(367, 25);
+            txtBuscaMsg.TabIndex = 21;
+            txtBuscaMsg.TextChanged += txtBuscaMsg_TextChanged;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -715,6 +811,10 @@
             tabEnviarMsg.PerformLayout();
             panelFiltroMensagem.ResumeLayout(false);
             panelFiltroMensagem.PerformLayout();
+            tabMsgEnviada.ResumeLayout(false);
+            tabMsgEnviada.PerformLayout();
+            panel3.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dataGridViewMensagens).EndInit();
             ResumeLayout(false);
         }
 
@@ -767,5 +867,12 @@
         private CheckBox chkSemConversaMensagem;
         private Panel panel2;
         private Label lbAnalisandoContatos;
+        private TabPage tabMsgEnviada;
+        private Panel panel3;
+        private DataGridView dataGridViewMensagens;
+        private CheckBox chkMsgComFalha;
+        private Label label14;
+        private TextBox txtBuscaMsg;
+        private Label label8;
     }
 }
