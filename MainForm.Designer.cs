@@ -882,7 +882,7 @@
         private CheckBox chkSemConversaMensagem;
         private Panel panel2;
         private Label lbAnalisandoContatos;
-<<<<<<< HEAD
+        private Label lbQtdSelcionados;
         private TabPage tabMsgEnviada;
         private Panel panel3;
         private DataGridView dataGridViewMensagens;
@@ -890,8 +890,5 @@
         private Label label14;
         private TextBox txtBuscaMsg;
         private Label label8;
-=======
-        private Label lbQtdSelcionados;
->>>>>>> master
     }
 }
