@@ -33,13 +33,13 @@
             lbDataEnvio = new Label();
             label1 = new Label();
             label2 = new Label();
-            label3 = new Label();
+            lbEnvioSolicitado = new Label();
             label4 = new Label();
-            label5 = new Label();
+            lbEnviosSucesso = new Label();
             btnRepetirEnvio = new Button();
             btnEnviarFalhas = new Button();
             label7 = new Label();
-            label8 = new Label();
+            lbEnvioFalha = new Label();
             SuspendLayout();
             // 
             // label6
@@ -95,15 +95,15 @@
             label2.TabIndex = 17;
             label2.Text = "Envios solicitados:";
             // 
-            // label3
+            // lbEnvioSolicitado
             // 
-            label3.AutoSize = true;
-            label3.Font = new Font("Segoe UI", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label3.Location = new Point(776, 153);
-            label3.Name = "label3";
-            label3.Size = new Size(102, 25);
-            label3.TabIndex = 16;
-            label3.Text = "0 Contatos";
+            lbEnvioSolicitado.AutoSize = true;
+            lbEnvioSolicitado.Font = new Font("Segoe UI", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lbEnvioSolicitado.Location = new Point(776, 153);
+            lbEnvioSolicitado.Name = "lbEnvioSolicitado";
+            lbEnvioSolicitado.Size = new Size(102, 25);
+            lbEnvioSolicitado.TabIndex = 16;
+            lbEnvioSolicitado.Text = "0 Contatos";
             // 
             // label4
             // 
@@ -115,15 +115,15 @@
             label4.TabIndex = 19;
             label4.Text = "Envios com sucesso:";
             // 
-            // label5
+            // lbEnviosSucesso
             // 
-            label5.AutoSize = true;
-            label5.Font = new Font("Segoe UI", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label5.Location = new Point(776, 205);
-            label5.Name = "label5";
-            label5.Size = new Size(102, 25);
-            label5.TabIndex = 18;
-            label5.Text = "0 Contatos";
+            lbEnviosSucesso.AutoSize = true;
+            lbEnviosSucesso.Font = new Font("Segoe UI", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lbEnviosSucesso.Location = new Point(776, 205);
+            lbEnviosSucesso.Name = "lbEnviosSucesso";
+            lbEnviosSucesso.Size = new Size(102, 25);
+            lbEnviosSucesso.TabIndex = 18;
+            lbEnviosSucesso.Text = "0 Contatos";
             // 
             // btnRepetirEnvio
             // 
@@ -163,15 +163,15 @@
             label7.TabIndex = 23;
             label7.Text = "Envios com falha:";
             // 
-            // label8
+            // lbEnvioFalha
             // 
-            label8.AutoSize = true;
-            label8.Font = new Font("Segoe UI", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label8.Location = new Point(776, 252);
-            label8.Name = "label8";
-            label8.Size = new Size(102, 25);
-            label8.TabIndex = 22;
-            label8.Text = "0 Contatos";
+            lbEnvioFalha.AutoSize = true;
+            lbEnvioFalha.Font = new Font("Segoe UI", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lbEnvioFalha.Location = new Point(776, 252);
+            lbEnvioFalha.Name = "lbEnvioFalha";
+            lbEnvioFalha.Size = new Size(102, 25);
+            lbEnvioFalha.TabIndex = 22;
+            lbEnvioFalha.Text = "0 Contatos";
             // 
             // VerMensagemForm
             // 
@@ -179,19 +179,20 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1264, 681);
             Controls.Add(label7);
-            Controls.Add(label8);
+            Controls.Add(lbEnvioFalha);
             Controls.Add(btnEnviarFalhas);
             Controls.Add(btnRepetirEnvio);
             Controls.Add(label4);
-            Controls.Add(label5);
+            Controls.Add(lbEnviosSucesso);
             Controls.Add(label2);
-            Controls.Add(label3);
+            Controls.Add(lbEnvioSolicitado);
             Controls.Add(label1);
             Controls.Add(lbDataEnvio);
             Controls.Add(label6);
             Controls.Add(txtMensagem);
             Name = "VerMensagemForm";
             Text = "VerMensagemForm";
+            Load += VerMensagemForm_Load;
             ResumeLayout(false);
             PerformLayout();
         }
@@ -203,12 +204,12 @@
         private Label lbDataEnvio;
         private Label label1;
         private Label label2;
-        private Label label3;
+        private Label lbEnvioSolicitado;
         private Label label4;
-        private Label label5;
+        private Label lbEnviosSucesso;
         private Button btnRepetirEnvio;
         private Button btnEnviarFalhas;
         private Label label7;
-        private Label label8;
+        private Label lbEnvioFalha;
     }
 }

@@ -22,7 +22,10 @@ namespace ZapEnvioSeguro.Forms {
             lbVersaoAtualUpdate.Text = appVersion;
             labelVersion.Text = appVersion;
 
+#if !DEBUG
             await UpdateMyApp();
+#endif
+
             GetDeviceId();
 
             string savedEmail = Properties.Settings.Default.UserEmail;

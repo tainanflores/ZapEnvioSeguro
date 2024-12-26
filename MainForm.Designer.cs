@@ -766,6 +766,12 @@
             dataGridViewMensagens.ShowEditingIcon = false;
             dataGridViewMensagens.Size = new Size(1260, 497);
             dataGridViewMensagens.TabIndex = 5;
+            dataGridViewMensagens.CellContentClick += dataGridViewMensagens_CellContentClick;
+            dataGridViewMensagens.CellFormatting += dataGridViewMensagens_CellFormatting;
+            dataGridViewMensagens.CellValueChanged += dataGridViewMensagens_CellValueChanged;
+            dataGridViewMensagens.CellValueNeeded += dataGridViewMensagens_CellValueNeeded;
+            dataGridViewMensagens.CellValuePushed += DataGridViewMensagens_CellValuePushed;
+            dataGridViewMensagens.CurrentCellDirtyStateChanged += dataGridViewMensagens_CurrentCellDirtyStateChanged;
             // 
             // chkMsgComFalha
             // 

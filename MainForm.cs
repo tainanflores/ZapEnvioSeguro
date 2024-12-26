@@ -74,9 +74,11 @@ namespace ZapEnvioSeguro
 
             // Habilita o modo virtual
             dataGridViewContatos.VirtualMode = true;
+            dataGridViewMensagens.VirtualMode = true;
 
             // Habilita o double buffering
             dataGridViewContatos.EnableDoubleBuffering();
+            dataGridViewMensagens.EnableDoubleBuffering();
 
             // Adiciona as colunas necessárias (Selecionar, Editar, etc.)
             InitializeDataGridViewColumns();
@@ -97,7 +99,8 @@ namespace ZapEnvioSeguro
             searchTimerMsg.Interval = 300; // Intervalo de 300 ms
             searchTimerMsg.Tick += SearchTimerMsg_Tick;
 
-            await LoadContacts().ConfigureAwait(false);
+            LoadContacts();
+            LoadMessages();
             txtDDD.MaxLength = 2;
             txtDias.MaxLength = 3;
             txtDddMensagem.MaxLength = 2;
@@ -468,7 +471,7 @@ namespace ZapEnvioSeguro
             }
         }
 
-        public async Task LoadContacts()
+        public async void LoadContacts()
         {
             var query = $"SELECT " +
                  $"Id, Nome, Telefone, Sexo, DateLastReceivedMsg, DateLastSentMsg, IsBusiness, PushName, IdEmpresa " +
@@ -1294,7 +1297,7 @@ namespace ZapEnvioSeguro
 
                 await dbHelper.ExecuteTransactionAsync(queries, progress);
 
-                await LoadContacts();
+                LoadContacts();
             }
             catch (Exception ex)
             {
@@ -1504,15 +1507,15 @@ namespace ZapEnvioSeguro
                 }
 
                 var query = "INSERT INTO Mensagens " +
-                    "(Mensagem, DataEnvio, QuatidadeContatosSolicitados, IdEmpresa) " +
-                    "VALUES (@Mensagem, @DataEnvio, @QuatidadeContatosSolicitados, @IdEmpresa) " +
+                    "(Mensagem, DataEnvio, QuantidadeContatosSolicitados, IdEmpresa) " +
+                    "VALUES (@Mensagem, @DataEnvio, @QuantidadeContatosSolicitados, @IdEmpresa) " +
                     "SELECT SCOPE_IDENTITY()";
 
                 SqlParameter[] parameters = new SqlParameter[]
                 {
                     new SqlParameter("@Mensagem", mensagem),
                     new SqlParameter("@DataEnvio", DateTime.Now.ToString()),
-                    new SqlParameter("@QuatidadeContatosSolicitados", contatosSelecionadosParaEnvio.Count()),
+                    new SqlParameter("@QuantidadeContatosSolicitados", contatosSelecionadosParaEnvio.Count()),
                     new SqlParameter("@IdEmpresa",Evento.IdEmpresa)
                 };
 
@@ -1545,10 +1548,15 @@ namespace ZapEnvioSeguro
                     int percent = (int)((double)current / total * 100);
                     progress?.Report(new ProgressReport { Percent = percent, Message = $"{current} de {total}" });
 
+                    SendTimer.Start();
+
                     await EnviarMensagemSegura(contato.Telefone, mensagem);
+
+                    SendTimer.Stop();
                 }
 
-                query = "SELECT COUNT(*) FROM MensagemEnviada WHERE MensagemId = @MensagemId ";
+                query = "SELECT COUNT(*) FROM MensagemEnviada WHERE MensagemId = @MensagemId AND SucessoEnviada = 1";
+
                 parameters = new SqlParameter[]
                 {
                     new SqlParameter("@MensagemId", idMensagem)
@@ -1556,11 +1564,14 @@ namespace ZapEnvioSeguro
 
                 var sucesso = await dbHelper.ExecuteScalarAsync(query, parameters);
 
-                int qtdFalha = Convert.ToInt32(sucesso) - Convert.ToInt32(total);
+                int qtdFalha = Convert.ToInt32(total) - Convert.ToInt32(sucesso);
 
                 progressForm.Close();
 
-                MessageBox.Show($"O envio das mensagens foi finalizado.\n{sucesso} mensagens enviadas com sucesso!\n {qtdFalha} mensagens não foram enviadas",
+                string msgSucesso = Convert.ToInt32(sucesso) > 0 ? $"{sucesso} mensagens enviadas com sucesso!" : "Nenhuma mensagem foi enviada";
+                string msgFalha = qtdFalha > 0 ? $"{qtdFalha} mensagens não foram enviadas" : "Não houve nenhuma falha ao enviar";
+
+                MessageBox.Show($"O envio das mensagens foi finalizado.\n{msgSucesso}\n ,{msgFalha}",
                     "Mensagens enviadas", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 this.Enabled = true;
@@ -1569,7 +1580,8 @@ namespace ZapEnvioSeguro
                 txtBusca.Clear();
                 contatosSelecionadosParaEnvio.Clear();
                 LimparPanelFiltros();
-                await LoadContacts();
+                LoadContacts();
+                LoadMessages();
 
             }
             catch (Exception ex)
@@ -1769,7 +1781,7 @@ namespace ZapEnvioSeguro
             {
                 var mensagem = mensagensListVirtualFiltered[e.RowIndex];
 
-                if (e.ColumnIndex == dataGridViewMensagens.Columns["Editar"].Index && e.RowIndex >= 0)
+                if (e.ColumnIndex == dataGridViewMensagens.Columns["VerMensagem"].Index && e.RowIndex >= 0)
                 {
                     long mensagemId = mensagem.Id;
 
@@ -1826,7 +1838,7 @@ namespace ZapEnvioSeguro
             }
         }
 
-        public async Task LoadMessages()
+        public async void LoadMessages()
         {
             var query = $"SELECT " +
                  $"Id, Mensagem, DataEnvio, QuantidadeContatosSolicitados, QuantidadeContatosSucesso, IdEmpresa " +
@@ -1860,7 +1872,17 @@ namespace ZapEnvioSeguro
 
                 mensagensListVirtualFiltered = new List<Mensagens>(mensagensList);
 
-                dataGridViewMensagens.SuspendDrawing();
+                if (dataGridViewMensagens.InvokeRequired)
+                {
+                    dataGridViewMensagens.Invoke(new Action(() =>
+                    {
+                        dataGridViewMensagens.SuspendDrawing();
+                    }));
+                }
+                else
+                {
+                    dataGridViewMensagens.SuspendDrawing();
+                }
 
                 try
                 {
@@ -1869,7 +1891,7 @@ namespace ZapEnvioSeguro
                 finally
                 {
                     dataGridViewMensagens.ResumeDrawing();
-                    lbQtdFiltrados.Text = $"{mensagensListVirtualFiltered.Count.ToString()} Mensagens";
+                    //lbQtdFiltrados.Text = $"{mensagensListVirtualFiltered.Count.ToString()} Mensagens";
                 }
 
             }
