@@ -23,19 +23,20 @@ namespace ZapEnvioSeguro.Forms {
             labelVersion.Text = appVersion;
             this.Enabled = false;
 
-#if !DEBUG
-            await UpdateMyApp();
-#endif
-            this.Enabled = true;
-            GetDeviceId();
-
             string savedEmail = Properties.Settings.Default.UserEmail;
-
             if (!string.IsNullOrEmpty(savedEmail))
             {
                 txtEmail.Text = savedEmail;
                 chkSaveLogin.Checked = true;
             }
+
+            GetDeviceId();
+
+#if !DEBUG
+            await UpdateMyApp();
+#endif
+            this.Enabled = true;
+            
         }
 
         private async Task UpdateMyApp()
@@ -53,6 +54,7 @@ namespace ZapEnvioSeguro.Forms {
 
             panelUpdate.Invoke((Action)(() => panelUpdate.Visible = true));
             panelLogin.Invoke((Action)(() => panelLogin.Enabled = false));
+            panelLogin.Invoke((Action)(() => lbNovaVersaoUpdate.Text = newVersion.TargetFullRelease.ToString()));
             progressBarUpdate.Invoke((Action)(() => progressBarUpdate.Value = 0));
             lbStatusUpdate.Invoke((Action)(() => lbStatusUpdate.Text = "Baixando nova versão..."));
 
