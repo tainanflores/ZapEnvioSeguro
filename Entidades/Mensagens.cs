@@ -8,5 +8,4 @@ public class Mensagens
     public required long QuantidadeContatosSolicitados { get; set; }
     public long QuantidadeContatosSucesso { get; set; }
     public required long IdEmpresa { get; set; } // ID da empresa associada
-    public bool Selecionado { get; internal set; }
 }

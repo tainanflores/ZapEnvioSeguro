@@ -21,11 +21,12 @@ namespace ZapEnvioSeguro.Forms {
             string appVersion = Application.ProductVersion;
             lbVersaoAtualUpdate.Text = appVersion;
             labelVersion.Text = appVersion;
+            this.Enabled = false;
 
 #if !DEBUG
             await UpdateMyApp();
 #endif
-
+            this.Enabled = true;
             GetDeviceId();
 
             string savedEmail = Properties.Settings.Default.UserEmail;
@@ -83,7 +84,6 @@ namespace ZapEnvioSeguro.Forms {
 
                 if (!loginSuccess)
                 {
-
                     MessageBox.Show("Falha no login.");
                     btnLogin.Enabled = true;
                 }
@@ -98,6 +98,7 @@ namespace ZapEnvioSeguro.Forms {
             {
                 SystemSounds.Hand.Play();
 
+                if (ex.Message == "Senha incorreta.") txtPassword.Clear();
                 MessageBox.Show($"{ex.Message}");
 
                 this.Enabled = true;
@@ -171,6 +172,11 @@ namespace ZapEnvioSeguro.Forms {
                 e.SuppressKeyPress = true;
                 btnLogin.PerformClick();
             }
+        }
+
+        private void chkVerSenha_CheckedChanged_1(object sender, EventArgs e)
+        {
+            txtPassword.UseSystemPasswordChar = !chkVerSenha.Checked;
         }
     }
 

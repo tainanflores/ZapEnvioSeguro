@@ -123,7 +123,7 @@
             panelUpdate.Controls.Add(lbStatusUpdate);
             panelUpdate.Controls.Add(label3);
             panelUpdate.Controls.Add(progressBarUpdate);
-            panelUpdate.Location = new Point(12, 162);
+            panelUpdate.Location = new Point(12, 166);
             panelUpdate.Name = "panelUpdate";
             panelUpdate.Size = new Size(310, 153);
             panelUpdate.TabIndex = 13;
@@ -234,6 +234,7 @@
             chkVerSenha.TabIndex = 5;
             chkVerSenha.Text = "Ver senha";
             chkVerSenha.UseVisualStyleBackColor = true;
+            chkVerSenha.CheckedChanged += chkVerSenha_CheckedChanged_1;
             // 
             // label1
             // 

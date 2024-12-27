@@ -50,7 +50,7 @@ namespace ZapEnvioSeguro.Entidades
         public object[] Labels { get; set; }
         public bool HasReaction { get; set; }
         public int EphemeralDuration { get; set; }
-        public int EphemeralSettingTimestamp { get; set; }
+        //public int EphemeralSettingTimestamp { get; set; }
         public string DisappearingModeInitiator { get; set; }
         public string DisappearingModeTrigger { get; set; }
         public bool ProductHeaderImageRejected { get; set; }
