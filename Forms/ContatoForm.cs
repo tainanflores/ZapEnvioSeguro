@@ -118,7 +118,7 @@ namespace ZapEnvioSeguro.Forms
 
                 if (mainForm != null)
                 {
-                    await mainForm.LoadContacts(); // Atualiza os contatos na tela principal
+                    mainForm.LoadContacts(); // Atualiza os contatos na tela principal
                 }
 
                 this.Close(); // Fecha o formulário

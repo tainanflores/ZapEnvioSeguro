@@ -1,12 +1,12 @@
 using System.Data;
 using System.Media;
-using ZapEnvioSeguro.Forms;
-using Microsoft.Web.WebView2.Core;
-using ZapEnvioSeguro.Classes;
-using Newtonsoft.Json;
-using ZapEnvioSeguro.Entidades;
 using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
+using Microsoft.Web.WebView2.Core;
+using Newtonsoft.Json;
+using ZapEnvioSeguro.Classes;
+using ZapEnvioSeguro.Entidades;
+using ZapEnvioSeguro.Forms;
 
 
 
@@ -14,16 +14,22 @@ namespace ZapEnvioSeguro
 {
     public partial class MainForm : Form
     {
+        private Panel overlayPanel;
+        private PictureBox loadingGif;
+
         private DatabaseHelper dbHelper;
 
         private readonly WppConnect wppConnect = new WppConnect();
 
         private System.Windows.Forms.Timer searchTimer;
+        private System.Windows.Forms.Timer searchTimerMsg;
         private System.Windows.Forms.Timer SendTimer;
 
         public List<Contato> contatosList = new List<Contato>();
+        public List<Mensagens> mensagensList = new List<Mensagens>();
         public List<Contato> contatosSelecionadosParaEnvio = new List<Contato>();
         private List<Contato> contatosListVirtualFiltered = new List<Contato>();
+        private List<Mensagens> mensagensListVirtualFiltered = new List<Mensagens>();
 
         public static bool enviarClicado = false;
         public static bool wppInjetado = false;
@@ -53,8 +59,61 @@ namespace ZapEnvioSeguro
             SendTimer.Tick += SendTimer_Tick;
         }
 
+        private void ShowLoading()
+        {
+            overlayPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.White, 
+                Parent = this,
+                Visible = true
+            };
+            string gifPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "tenor.gif");
+            loadingGif = new PictureBox
+            {
+                Image = Image.FromFile(gifPath),
+                BackColor = Color.Transparent, // Transparência no PictureBox
+                Size = new Size(100, 100), // Tamanho do PictureBox
+                SizeMode = PictureBoxSizeMode.Zoom, // Ajusta o GIF dentro do PictureBox
+                Parent = overlayPanel
+            };
+
+            // Centralizar o GIF no painel
+            loadingGif.Location = new Point(
+                (overlayPanel.Width - loadingGif.Width) / 2,
+                (overlayPanel.Height - loadingGif.Height) / 2
+            );
+
+            this.Controls.Add(overlayPanel);
+            overlayPanel.BringToFront();
+            loadingGif.BringToFront();
+        }
+
+        private void HideLoading()
+        {
+            if (overlayPanel != null)
+            {
+                overlayPanel.Visible = false;
+                overlayPanel.Dispose();
+            }
+        }
+
+        private async Task LoadDataAsync()
+        {
+            // Carregar os contatos e mensagens de forma assíncrona
+            await Task.WhenAll(LoadContacts(), LoadMessages());
+            
+            HideLoading();
+
+        }
+
         private async void MainForm_Load(object sender, EventArgs e)
         {
+            await Task.Run(() =>
+            {
+                Invoke((Action)ShowLoading);
+            });
+
             await wppConnect.DownloadWppJs();
 
             string webViewDataFolder = Path.Combine(appDataPath, "ZapEnvioSeguro", "WebView2");
@@ -69,14 +128,16 @@ namespace ZapEnvioSeguro
             webView21.CoreWebView2.DOMContentLoaded += CoreWebView2_DOMContentLoaded;
             webView21.CoreWebView2.Navigate("https://web.whatsapp.com/");
 
-            // Habilita o modo virtual
             dataGridViewContatos.VirtualMode = true;
+            dataGridViewMensagens.VirtualMode = true;
 
             // Habilita o double buffering
             dataGridViewContatos.EnableDoubleBuffering();
+            dataGridViewMensagens.EnableDoubleBuffering();
 
             // Adiciona as colunas necessárias (Selecionar, Editar, etc.)
             InitializeDataGridViewColumns();
+            InitializeDataGridViewColumnsMessages();
 
             // Opcional: Melhorar a performance desabilitando alguns comportamentos
             dataGridViewContatos.RowHeadersVisible = false;
@@ -89,8 +150,13 @@ namespace ZapEnvioSeguro
             searchTimer = new System.Windows.Forms.Timer();
             searchTimer.Interval = 300; // Intervalo de 300 ms
             searchTimer.Tick += SearchTimer_Tick;
+            searchTimerMsg = new System.Windows.Forms.Timer();
+            searchTimerMsg.Interval = 300; // Intervalo de 300 ms
+            searchTimerMsg.Tick += SearchTimerMsg_Tick;
 
-            await LoadContacts().ConfigureAwait(false);
+            await LoadDataAsync();
+            //LoadContacts();
+            //LoadMessages();
             txtDDD.MaxLength = 2;
             txtDias.MaxLength = 3;
             txtDddMensagem.MaxLength = 2;
@@ -126,13 +192,17 @@ namespace ZapEnvioSeguro
 
         private void SearchTimer_Tick(object sender, EventArgs e)
         {
-            // Interrompe o Timer para evitar chamadas repetidas
             searchTimer.Stop();
 
-            // Executa a filtragem assíncrona
             ApplyFiltersAsync();
 
-            //chkSelecionarTodos.Checked = false;
+        }
+        private void SearchTimerMsg_Tick(object sender, EventArgs e)
+        {
+            searchTimerMsg.Stop();
+
+            ApplyFiltersAsyncMensagens();
+
         }
 
 
@@ -140,21 +210,21 @@ namespace ZapEnvioSeguro
         {
             if (chkFiltroDDD.Checked && !string.IsNullOrEmpty(txtDDD.Text))
             {
+                filtroAtivo = true;
                 ApplyFiltersAsync();
                 btnRemoverFiltros.Enabled = true;
-                filtroAtivo = true;
             }
             else if (chkFiltroDias.Checked && !string.IsNullOrEmpty(txtDias.Text))
             {
+                filtroAtivo = true;
                 ApplyFiltersAsync();
                 btnRemoverFiltros.Enabled = true;
-                filtroAtivo = true;
             }
             else if (chkFiltroBusiness.Checked || chkFiltroSemConversa.Checked)
             {
+                filtroAtivo = true;
                 ApplyFiltersAsync();
                 btnRemoverFiltros.Enabled = true;
-                filtroAtivo = true;
             }
             else
             {
@@ -297,7 +367,7 @@ namespace ZapEnvioSeguro
                 {
                     // Alterar a cor de fundo da linha
                     row.DefaultCellStyle.BackColor = Color.LightGreen; // Cor quando marcado
-                    
+
                 }
                 else
                 {
@@ -456,8 +526,10 @@ namespace ZapEnvioSeguro
                 dataGridViewContatos.Columns.Add(editButtonColumn);
             }
         }
+
         public async Task LoadContacts()
         {
+
             var query = $"SELECT " +
                  $"Id, Nome, Telefone, Sexo, DateLastReceivedMsg, DateLastSentMsg, IsBusiness, PushName, IdEmpresa " +
                  $"FROM " +
@@ -490,6 +562,8 @@ namespace ZapEnvioSeguro
                         Selecionado = false // Inicializa como não selecionado
                     });
                 }
+
+                contatosList = contatosList.OrderBy(x => x.Nome).ToList();
 
                 // Inicializa a lista filtrada com todos os contatos
                 contatosListVirtualFiltered = new List<Contato>(contatosList);
@@ -540,7 +614,7 @@ namespace ZapEnvioSeguro
                 {
                     var query = contatosList.AsQueryable();
 
-                    if (filtroAtivo)
+                        if (filtroAtivo)
                     {
                         if (chkFiltroSemConversa.Checked)
                         {
@@ -600,7 +674,6 @@ namespace ZapEnvioSeguro
                 MessageBox.Show($"Erro ao aplicar filtros: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
 
         public void UpdateDataGridView(List<Contato>? filteredContacts = null)
         {
@@ -926,38 +999,69 @@ namespace ZapEnvioSeguro
             {
                 try
                 {
+                    SqlParameter[] parameters;
+
+                    parameters = new SqlParameter[]
+                    {
+                        new SqlParameter("@MensagemId", mensagemIdEnviando),
+                        new SqlParameter("@TelefoneId", telefoneIdEnviando),
+                    };
+
+                    var existeMsg = await dbHelper.ExecuteScalarAsync("SELECT Id FROM MensagemEnviada WHERE MensagemId = @MensagemId AND TelefoneId = @TelefoneId", parameters);
+
                     var query = "INSERT INTO MensagemEnviada " +
                   "(MensagemId, TelefoneId, DataEnvio, IdEmpresa, SucessoEnviada) " +
                   "VALUES (@MensagemId, @TelefoneId, @DataEnvio, @IdEmpresa, @SucessoEnviada);";
 
-                    SqlParameter[] parameters;
-
-                    if (content.Contains("mensagemEnviada"))
+                    if (existeMsg == null)
                     {
-                        parameters = new SqlParameter[]
+                        if (content.Contains("mensagemEnviada"))
                         {
-                        new SqlParameter("@MensagemId", mensagemIdEnviando),
-                        new SqlParameter("@TelefoneId", telefoneIdEnviando),
-                        new SqlParameter("@DataEnvio", DateTime.Now.ToString()),
-                        new SqlParameter("@IdEmpresa", Evento.IdEmpresa),
-                        new SqlParameter("@SucessoEnviada", true)
+                            parameters = new SqlParameter[]
+                            {
+                                new SqlParameter("@MensagemId", mensagemIdEnviando),
+                                new SqlParameter("@TelefoneId", telefoneIdEnviando),
+                                new SqlParameter("@DataEnvio", DateTime.Now.ToString()),
+                                new SqlParameter("@IdEmpresa", Evento.IdEmpresa),
+                                new SqlParameter("@SucessoEnviada", true)
+                            };
+                        }
+                        else
+                        {
+                            parameters = new SqlParameter[]
+                           {
+                                new SqlParameter("@MensagemId", mensagemIdEnviando),
+                                new SqlParameter("@TelefoneId", telefoneIdEnviando),
+                                new SqlParameter("@DataEnvio", DateTime.Now.ToString()),
+                                new SqlParameter("@IdEmpresa", Evento.IdEmpresa),
+                                new SqlParameter("@SucessoEnviada", false)
+                           };
+                        }
 
-                        };
+                        var idMsg = await dbHelper.InsertDataAsync(query, parameters);
                     }
                     else
                     {
-                        parameters = new SqlParameter[]
-                       {
-                        new SqlParameter("@MensagemId", mensagemIdEnviando),
-                        new SqlParameter("@TelefoneId", telefoneIdEnviando),
-                        new SqlParameter("@DataEnvio", DateTime.Now.ToString()),
-                        new SqlParameter("@IdEmpresa", Evento.IdEmpresa),
-                        new SqlParameter("@SucessoEnviada", false)
+                        query = "UPDATE MensagemEnviada SET SucessoEnviada = @SucessoEnviada WHERE Id = @Id";
+                        if (content.Contains("mensagemEnviada"))
+                        {
+                            parameters = new SqlParameter[]
+                            {
+                                new SqlParameter("@Id",existeMsg),
+                                new SqlParameter("@SucessoEnviada", true)
+                            };
+                        }
+                        else
+                        {
+                            parameters = new SqlParameter[]
+                            {
+                                new SqlParameter("@Id",existeMsg),
+                                new SqlParameter("@SucessoEnviada", false)
+                            };
+                        }
 
-                       };
+                        await dbHelper.ExecuteNonQueryAsync(query, parameters);
                     }
-
-                    var idMsg = await dbHelper.InsertDataAsync(query, parameters);
 
                     query = "UPDATE Contatos SET DateLastSentMsg = @DateLastSentMsg, LastSentMsgId = @LastSentMsgId WHERE Id = @Id";
                     parameters = new SqlParameter[]
@@ -1100,6 +1204,7 @@ namespace ZapEnvioSeguro
             {
                 try
                 {
+                    
                     var response = JsonConvert.DeserializeObject<WhatsAppMessage>(content);
                     if (!response.From.EndsWith("@c.us"))
                     {
@@ -1283,7 +1388,7 @@ namespace ZapEnvioSeguro
 
                 await dbHelper.ExecuteTransactionAsync(queries, progress);
 
-                await LoadContacts();
+                LoadContacts();
             }
             catch (Exception ex)
             {
@@ -1418,22 +1523,24 @@ namespace ZapEnvioSeguro
 
                 if (dataTable == null || dataTable.Rows.Count == 0)
                 {
-                    return contatoList.Count; // Se não houver contatos no banco, todos os contatos da lista são novos
+                    return contatoList.Count;
                 }
 
-                // Cria um conjunto de telefones existentes no banco de dados
-                var telefonesExistentes = new HashSet<string>();
+                //var telefonesExistentes = new HashSet<string>();
 
-                foreach (DataRow row in dataTable.Rows)
-                {
-                    // Adiciona o telefone encontrado no banco ao conjunto
-                    telefonesExistentes.Add(row["Telefone"].ToString());
-                }
+                //foreach (DataRow row in dataTable.Rows)
+                //{
+                //    telefonesExistentes.Add(row["Telefone"].ToString());
+                //}
+                int contatosNaoExistemNaDataTable = contatoList.Count(
+                    contato => !dataTable.AsEnumerable().Any(
+                        row => row.Field<string>("Telefone") == contato.Telefone
+                        )
+                    );
 
-                // Conta quantos contatos da lista não estão no banco
-                int contatosNaoExistentes = contatoList.Count(c => !telefonesExistentes.Contains(c.Telefone));
+                //int contatosNaoExistentes = contatoList.Count(c => !dataTable.AsEnumerable().Any(row => row.Field<string>("Telefone"))).Contains(c.Telefone));
 
-                return contatosNaoExistentes;
+                return contatosNaoExistemNaDataTable;
             }
             catch (Exception ex)
             {
@@ -1444,7 +1551,6 @@ namespace ZapEnvioSeguro
 
         private async void btnSincronizarContatos_Click(object sender, EventArgs e)
         {
-            // Passo 1: Exibir uma mensagem de confirmação
             var result = MessageBox.Show(
                 "Deseja sincronizar os contatos do WhatsApp e salvar a data da última mensagem recebida de cada contato?",
                 "Confirmar Sincronização",
@@ -1462,7 +1568,6 @@ namespace ZapEnvioSeguro
         {
             btnEnviar.Enabled = false;
             enviarClicado = false;
-            //tabControl1.SelectTab(0);
             ProgressForm progressForm = new ProgressForm();
 
             try
@@ -1498,15 +1603,15 @@ namespace ZapEnvioSeguro
                 }
 
                 var query = "INSERT INTO Mensagens " +
-                    "(Mensagem, DataEnvio, QuatidadeContatosSolicitados, IdEmpresa) " +
-                    "VALUES (@Mensagem, @DataEnvio, @QuatidadeContatosSolicitados, @IdEmpresa) " +
+                    "(Mensagem, DataEnvio, QuantidadeContatosSolicitados, IdEmpresa) " +
+                    "VALUES (@Mensagem, @DataEnvio, @QuantidadeContatosSolicitados, @IdEmpresa) " +
                     "SELECT SCOPE_IDENTITY()";
 
                 SqlParameter[] parameters = new SqlParameter[]
                 {
                     new SqlParameter("@Mensagem", mensagem),
                     new SqlParameter("@DataEnvio", DateTime.Now.ToString()),
-                    new SqlParameter("@QuatidadeContatosSolicitados", contatosSelecionadosParaEnvio.Count()),
+                    new SqlParameter("@QuantidadeContatosSolicitados", contatosSelecionadosParaEnvio.Count()),
                     new SqlParameter("@IdEmpresa",Evento.IdEmpresa)
                 };
 
@@ -1535,14 +1640,19 @@ namespace ZapEnvioSeguro
                 {
                     //tabControl1.SelectTab(0);
                     telefoneIdEnviando = contato.Id;
-                    current++;
                     int percent = (int)((double)current / total * 100);
                     progress?.Report(new ProgressReport { Percent = percent, Message = $"{current} de {total}" });
 
+                    SendTimer.Start();
+
                     await EnviarMensagemSegura(contato.Telefone, mensagem);
+                    current++;
+
+                    SendTimer.Stop();
                 }
 
-                query = "SELECT COUNT(*) FROM MensagemEnviada WHERE MensagemId = @MensagemId ";
+                query = "SELECT COUNT(*) FROM MensagemEnviada WHERE MensagemId = @MensagemId AND SucessoEnviada = 1";
+
                 parameters = new SqlParameter[]
                 {
                     new SqlParameter("@MensagemId", idMensagem)
@@ -1550,11 +1660,24 @@ namespace ZapEnvioSeguro
 
                 var sucesso = await dbHelper.ExecuteScalarAsync(query, parameters);
 
-                int qtdFalha = Convert.ToInt32(sucesso) - Convert.ToInt32(total);
+                int qtdFalha = Convert.ToInt32(total) - Convert.ToInt32(sucesso);
+
+                query = "UPDATE Mensagens SET QuantidadeContatosSucesso = @QuantidadeContatosSucesso WHERE Id = @Id";
+
+                parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@QuantidadeContatosSucesso", Convert.ToInt64(sucesso)),
+                    new SqlParameter("@Id", idMensagem)
+                };
+
+                await dbHelper.ExecuteNonQueryAsync(query, parameters);
 
                 progressForm.Close();
 
-                MessageBox.Show($"O envio das mensagens foi finalizado.\n{sucesso} mensagens enviadas com sucesso!\n {qtdFalha} mensagens não foram enviadas",
+                string msgSucesso = Convert.ToInt32(sucesso) > 0 ? $"{sucesso} mensagens enviadas com sucesso!" : "Nenhuma mensagem foi enviada";
+                string msgFalha = qtdFalha > 0 ? $"{qtdFalha} mensagens não foram enviadas" : "Não houve nenhuma falha ao enviar";
+
+                MessageBox.Show($"O envio das mensagens foi finalizado.\n{msgSucesso}\n{msgFalha}",
                     "Mensagens enviadas", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 this.Enabled = true;
@@ -1563,7 +1686,8 @@ namespace ZapEnvioSeguro
                 txtBusca.Clear();
                 contatosSelecionadosParaEnvio.Clear();
                 LimparPanelFiltros();
-                await LoadContacts();
+                LoadContacts();
+                LoadMessages();
 
             }
             catch (Exception ex)
@@ -1574,6 +1698,130 @@ namespace ZapEnvioSeguro
                 this.Enabled = true;
             }
         }
+
+        public async Task EnviarMensagemSegura(List<Contato> contatosEnviar, string mensagem, long mensagemId)
+        {
+            ProgressForm progressForm = new ProgressForm();
+            try
+            {
+                var zapConectado = await webView21.CoreWebView2.ExecuteScriptAsync("function ready() { if(window.localStorage['last-wid'] || window.localStorage['last-wid-md']) {return true}} ready()");
+
+                if (string.IsNullOrEmpty(mensagem))
+                {
+                    MessageBox.Show("Por favor, escreva a mensagem antes de enviar.", "Campos Vazios", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    btnEnviar.Enabled = true;
+                    return;
+                }
+
+                if (zapConectado != "true")
+                {
+                    MessageBox.Show("O WhatsApp Web está desconectado. Por favor, reconecte antes de realizar qualquer ação.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    btnEnviar.Enabled = true;
+                    return;
+                }
+
+                string query;
+                SqlParameter[] parameters;
+
+                if (mensagemId == 0)
+                {
+                    query = "INSERT INTO Mensagens " +
+                   "(Mensagem, DataEnvio, QuantidadeContatosSolicitados, IdEmpresa) " +
+                   "VALUES (@Mensagem, @DataEnvio, @QuantidadeContatosSolicitados, @IdEmpresa) " +
+                   "SELECT SCOPE_IDENTITY()";
+
+                    parameters = new SqlParameter[]
+                    {
+                    new SqlParameter("@Mensagem", mensagem),
+                    new SqlParameter("@DataEnvio", DateTime.Now.ToString()),
+                    new SqlParameter("@QuantidadeContatosSolicitados", contatosEnviar.Count()),
+                    new SqlParameter("@IdEmpresa",Evento.IdEmpresa)
+                    };
+
+                    var idMensagem = await dbHelper.ExecuteScalarAsync(query, parameters);
+                    mensagemIdEnviando = idMensagem.ToString();                     
+                }
+                else
+                {
+                    mensagemIdEnviando = mensagemId.ToString();//idMensagem.ToString();
+                }
+
+                progressForm.CenterToParentForm(this);
+                progressForm.SetMin(0);
+                progressForm.SetMax(100);
+                progressForm.lbTituloProgress.Text = "Enviando Mensagens";
+                this.Enabled = false;
+                progressForm.Show();
+
+                var progressReport = new Progress<ProgressReport>(report =>
+                {
+                    progressForm.UpdateProgress(report.Percent, report.Message);
+                });
+
+                IProgress<ProgressReport> progress = progressReport;
+
+                int total = contatosEnviar.Count();
+                int current = 0;
+
+                foreach (var contato in contatosEnviar)
+                {
+                    //tabControl1.SelectTab(0);
+                    telefoneIdEnviando = contato.Id;
+                    int percent = (int)((double)current / total * 100);
+                    progress?.Report(new ProgressReport { Percent = percent, Message = $"{current} de {total}" });
+
+                    SendTimer.Start();
+
+                    await EnviarMensagemSegura(contato.Telefone, mensagem);
+                    current++;
+                    SendTimer.Stop();
+                }
+
+                query = "SELECT COUNT(*) FROM MensagemEnviada WHERE MensagemId = @MensagemId AND SucessoEnviada = 1";
+
+                parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@MensagemId", mensagemId)
+                };
+
+                var sucesso = await dbHelper.ExecuteScalarAsync(query, parameters);
+
+                int qtdFalha = Convert.ToInt32(total) - Convert.ToInt32(sucesso);
+
+                query = "UPDATE Mensagens SET QuantidadeContatosSucesso = @QuantidadeContatosSucesso WHERE Id = @Id";
+
+                parameters = new SqlParameter[]
+                {
+                    new SqlParameter("@QuantidadeContatosSucesso", Convert.ToInt64(sucesso)),
+                    new SqlParameter("@Id", mensagemId)
+                };
+
+                await dbHelper.ExecuteNonQueryAsync(query, parameters);
+
+                progressForm.Close();
+
+                string msgSucesso = Convert.ToInt32(sucesso) > 0 ? $"{sucesso} mensagens enviadas com sucesso!" : "Nenhuma mensagem foi enviada";
+                string msgFalha = qtdFalha > 0 ? $"{qtdFalha} mensagens não foram enviadas" : "Não houve nenhuma falha ao enviar";
+
+                MessageBox.Show($"O envio das mensagens foi finalizado.\n{msgSucesso}\n{msgFalha}",
+                    "Mensagens enviadas", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                this.Enabled = true;
+                btnEnviar.Enabled = true;
+                txtMensagem.Clear();
+                txtBusca.Clear();
+                contatosEnviar.Clear();
+                LoadContacts();
+                LoadMessages();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro: ", ex.Message);
+                progressForm.Close();
+                this.Enabled = true;
+            }
+        }
+
 
         private void LimparPanelFiltros()
         {
@@ -1604,10 +1852,8 @@ namespace ZapEnvioSeguro
                 return;
             }
 
-            // Remove caracteres não numéricos
             string apenasNumeros = Regex.Replace(telefone, @"\D", "");
 
-            // Adiciona o código do país "55" no início
             string telefoneFormatado = "55" + apenasNumeros;
 
             string url = $"https://wa.me/{telefoneFormatado}?text={Uri.EscapeDataString(mensagem)}";
@@ -1641,16 +1887,363 @@ namespace ZapEnvioSeguro
                 {
                     MessageBox.Show($"Erro ao executar script: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-
-                // Resetar a flag
-
             }
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
-            // Isso encerra o processo da aplicação ao fechar o MainForm
             Application.Exit();
         }
+
+        #region Tab Mensagens enviadas
+
+        //private void dataGridViewMensagens_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        //{
+        //    if (e.ColumnIndex == 0 && e.RowIndex >= 0) 
+        //    {
+        //        DataGridViewRow SelectedRow = dataGridViewMensagens.Rows[e.RowIndex];
+
+        //        if (Convert.ToBoolean(SelectedRow.Cells["Selecionar"].Value))
+        //        {
+        //            foreach (DataGridViewRow row in dataGridViewMensagens.Rows)
+        //            {
+        //                row.Cells["Selecionar"].Value = false;
+        //                var msgId = (long)row.Cells["ID"].Value;
+        //                var contato = contatosList.First(c => c.Id == msgId); 
+        //                contato.Selecionado = false;
+        //                row.DefaultCellStyle.BackColor = Color.White;
+
+        //            }
+        //        }
+        //        var mensagemId = (long)SelectedRow.Cells["ID"].Value;
+        //        var mensagem = mensagensList.First(m => m.Id == mensagemId);
+
+        //        if (Convert.ToBoolean(SelectedRow.Cells["Selecionar"].Value))
+        //        {
+        //            SelectedRow.DefaultCellStyle.BackColor = Color.LightGreen; 
+
+        //        }
+        //        else
+        //        {                    
+        //            SelectedRow.DefaultCellStyle.BackColor = Color.White; 
+        //        }
+        //    }
+        //}
+
+        //private void dataGridViewMensagens_CurrentCellDirtyStateChanged(object sender, EventArgs e)
+        //{
+        //    if (dataGridViewMensagens.IsCurrentCellDirty)
+        //    {
+        //        dataGridViewMensagens.CommitEdit(DataGridViewDataErrorContexts.Commit);
+        //    }
+        //}
+
+        private void dataGridViewMensagens_CellValueNeeded(object sender, DataGridViewCellValueEventArgs e)
+        {
+            if (e.RowIndex >= mensagensListVirtualFiltered.Count)
+                return;
+
+            var contato = mensagensListVirtualFiltered[e.RowIndex];
+
+            switch (dataGridViewMensagens.Columns[e.ColumnIndex].Name)
+            {
+                case "ID":
+                    e.Value = contato.Id;
+                    break;
+                case "Mensagem":
+                    e.Value = contato.Mensagem;
+                    break;
+                case "DataEnvio":
+                    e.Value = contato.DataEnvio.ToString("dd/MM/yyyy HH:mm") ?? "";
+                    break;
+                case "QtdContatosSelecionados":
+                    e.Value = contato.QuantidadeContatosSolicitados;
+                    break;
+                case "QuantidadeContatosSucesso":
+                    e.Value = contato.QuantidadeContatosSucesso;
+                    break;
+                case "VerMensagem":
+                    e.Value = "Ver Mensagem";
+                    break;
+            }
+
+            //if (dataGridViewMensagens.Columns[e.ColumnIndex].Name == "Selecionar")
+            //{
+            //    var row = dataGridViewMensagens.Rows[e.RowIndex];
+            //    row.DefaultCellStyle.BackColor = contato.Selecionado ? Color.LightGreen : Color.White;
+            //}
+        }
+
+        //private void DataGridViewMensagens_CellValuePushed(object sender, DataGridViewCellValueEventArgs e)
+        //{
+        //    if (e.RowIndex >= mensagensListVirtualFiltered.Count)
+        //        return;
+
+        //    var contato = mensagensListVirtualFiltered[e.RowIndex];
+
+        //    if (dataGridViewMensagens.Columns[e.ColumnIndex].Name == "Selecionar")
+        //    {
+        //        contato.Selecionado = Convert.ToBoolean(e.Value);
+
+        //        dataGridViewMensagens.InvalidateRow(e.RowIndex);
+        //    }
+        //}
+
+        //private void dataGridViewMensagens_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        //{
+        //    if (dataGridViewMensagens.Columns[e.ColumnIndex].Name == "Selecionar")
+        //    {
+        //        var contato = mensagensList[e.RowIndex];
+        //        e.Value = contato.Selecionado;
+        //    }
+        //}
+
+        private void dataGridViewMensagens_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0)
+                return;
+
+            if (dataGridViewMensagens.Columns[e.ColumnIndex].Name == "VerMensagem")
+            {
+                var mensagem = mensagensListVirtualFiltered[e.RowIndex];
+
+                if (e.ColumnIndex == dataGridViewMensagens.Columns["VerMensagem"].Index && e.RowIndex >= 0)
+                {
+                    long mensagemId = mensagem.Id;
+
+                    VerMensagemForm mensagemForm = new VerMensagemForm(this, mensagemId);
+                    mensagemForm.StartPosition = FormStartPosition.CenterParent;
+
+                    mensagemForm.ShowDialog(this);
+                }
+            }
+        }
+
+        private void InitializeDataGridViewColumnsMessages()
+        {
+            dataGridViewMensagens.ColumnHeadersDefaultCellStyle = new DataGridViewCellStyle
+            {
+                Alignment = DataGridViewContentAlignment.MiddleCenter,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = Color.White,
+                BackColor = Color.Gray
+            };
+
+            //if (dataGridViewMensagens.Columns["Selecionar"] == null)
+            //{
+            //    DataGridViewCheckBoxColumn selectColumn = new DataGridViewCheckBoxColumn
+            //    {
+            //        Name = "Selecionar",
+            //        HeaderText = "Selecionar",
+            //        Width = 100,
+            //        FalseValue = false,
+            //        TrueValue = true,
+            //        AutoSizeMode = DataGridViewAutoSizeColumnMode.None
+            //    };
+            //    dataGridViewMensagens.Columns.Add(selectColumn);
+            //}
+
+            dataGridViewMensagens.Columns.Add(new DataGridViewTextBoxColumn { Name = "ID", HeaderText = "ID", ReadOnly = true, Width = 100, AutoSizeMode = DataGridViewAutoSizeColumnMode.None, DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter, } });
+            dataGridViewMensagens.Columns.Add(new DataGridViewTextBoxColumn { Name = "Mensagem", HeaderText = "Mensagem", ReadOnly = true, Width = 300 });
+            dataGridViewMensagens.Columns.Add(new DataGridViewTextBoxColumn { Name = "DataEnvio", HeaderText = "Data de Envio", ReadOnly = true, DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter } });
+            dataGridViewMensagens.Columns.Add(new DataGridViewTextBoxColumn { Name = "QtdContatosSelecionados", HeaderText = "Contatos Selecionados", ReadOnly = true, DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter, } });
+            dataGridViewMensagens.Columns.Add(new DataGridViewTextBoxColumn { Name = "QuantidadeContatosSucesso", HeaderText = "Envios com Sucesso", ReadOnly = true, DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter, } });
+
+            if (dataGridViewMensagens.Columns["VerMensagem"] == null)
+            {
+                DataGridViewButtonColumn editButtonColumn = new DataGridViewButtonColumn
+                {
+                    Name = "VerMensagem",
+                    HeaderText = "",
+                    Text = "Ver Mensagem",
+                    UseColumnTextForButtonValue = true,
+                    Width = 120,
+                    AutoSizeMode = DataGridViewAutoSizeColumnMode.None
+                };
+                dataGridViewMensagens.Columns.Add(editButtonColumn);
+            }
+        }
+
+        public async Task LoadMessages()
+        {
+            var query = $"SELECT " +
+                 $"Id, Mensagem, DataEnvio, QuantidadeContatosSolicitados, QuantidadeContatosSucesso, IdEmpresa " +
+                 $"FROM " +
+                 $"Mensagens " +
+                 $"WHERE IdEmpresa = @IdEmpresa";
+
+            SqlParameter[] parameters = new SqlParameter[]
+            {
+                new SqlParameter("@IdEmpresa", Evento.IdEmpresa)
+            };
+
+            try
+            {
+                var dataTable = await dbHelper.ExecuteQueryAsync(query, parameters);
+                mensagensList.Clear();
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    mensagensList.Add(new Mensagens
+                    {
+                        Id = (long)row["Id"],
+                        Mensagem = row["Mensagem"].ToString(),
+                        DataEnvio = (DateTime)row["DataEnvio"],
+                        QuantidadeContatosSolicitados = (long)row["QuantidadeContatosSolicitados"],
+                        QuantidadeContatosSucesso = (long)row["QuantidadeContatosSucesso"],
+                        IdEmpresa = (long)row["IdEmpresa"]
+                    });
+                }
+
+                mensagensListVirtualFiltered = mensagensList.AsEnumerable().Reverse().ToList();
+
+                if (dataGridViewMensagens.InvokeRequired)
+                {
+                    dataGridViewMensagens.Invoke(new Action(() =>
+                    {
+                        dataGridViewMensagens.SuspendDrawing();
+                    }));
+                }
+                else
+                {
+                    dataGridViewMensagens.SuspendDrawing();
+                }
+
+                try
+                {
+                    dataGridViewMensagens.RowCount = mensagensListVirtualFiltered.Count;
+                }
+                finally
+                {
+                    dataGridViewMensagens.ResumeDrawing();
+                    //lbQtdFiltrados.Text = $"{mensagensListVirtualFiltered.Count.ToString()} Mensagens";
+                }
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao carregar Mensagens: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void ApplyFiltersAsyncMensagens()
+        {
+            try
+            {
+
+                string searchTerm = string.Empty;
+
+                if (txtBuscaMsg.InvokeRequired)
+                {
+                    txtBuscaMsg.Invoke(new MethodInvoker(delegate
+                    {
+                        searchTerm = txtBuscaMsg.Text.Trim().ToLower();
+                    }));
+                }
+                else
+                {
+                    searchTerm = txtBuscaMsg.Text.Trim().ToLower();
+                }
+
+                var filteredList = await Task.Run(() =>
+                {
+                    var query = mensagensList.AsQueryable();
+
+                    if (chkMsgComFalha.Checked)
+                    {
+                        query = query.Where(m => m.QuantidadeContatosSolicitados > m.QuantidadeContatosSucesso);
+                    }
+
+                    if (!string.IsNullOrEmpty(searchTerm))
+                    {
+                        query = query.Where(m => m.Mensagem.ToLower().Contains(searchTerm));
+                    }
+
+                    return query.ToList();
+                });
+
+                dataGridViewMensagens.SuspendDrawing();
+
+                try
+                {
+                    mensagensListVirtualFiltered = filteredList;
+                    dataGridViewMensagens.RowCount = mensagensListVirtualFiltered.Count;
+                }
+                finally
+                {
+                    dataGridViewMensagens.ResumeDrawing();
+                }
+
+                dataGridViewMensagens.Refresh();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao aplicar filtros: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        public void UpdateDataGridViewMensagens(List<Mensagens>? filteredMensages = null)
+        {
+            var dataSource = filteredMensages ?? mensagensList;
+
+            var dt = new DataTable();
+
+            dt.Columns.Add("ID", typeof(long));
+            dt.Columns.Add("Mensagem");
+            dt.Columns.Add("DataEnvio");
+            dt.Columns.Add("QtdContatosSolicitados");
+            dt.Columns.Add("QtdContatosSucesso");
+
+            foreach (var contato in dataSource)
+            {
+                dt.Rows.Add(
+                    contato.Id,
+                    contato.Mensagem,
+                    contato.DataEnvio.ToString("dd/MM/yyyy HH:mm"),
+                    contato.QuantidadeContatosSolicitados,
+                    contato.QuantidadeContatosSucesso
+                );
+            }
+
+            dataGridViewMensagens.DataSource = dt;
+
+            dataGridViewMensagens.ColumnHeadersDefaultCellStyle.Font = new Font(dataGridViewMensagens.ColumnHeadersDefaultCellStyle.Font, FontStyle.Bold);
+
+            foreach (DataGridViewColumn column in dataGridViewMensagens.Columns)
+            {
+                if (column.Name != "Selecionar")
+                {
+                    column.ReadOnly = true;
+                }
+            }
+
+            foreach (DataGridViewRow row in dataGridViewMensagens.Rows)
+            {
+                var messageId = (long)row.Cells["ID"].Value;
+                var message = dataSource.First(c => c.Id == messageId);
+                //row.Cells["Selecionar"].Value = message.Selecionado;
+
+                //if (message.Selecionado)
+                //{
+                //    row.DefaultCellStyle.BackColor = Color.LightGreen; 
+                //}
+                //else
+                //{
+                //    row.DefaultCellStyle.BackColor = Color.White; 
+                //}
+            }
+        }
+
+        private void txtBuscaMsg_TextChanged(object sender, EventArgs e)
+        {
+            searchTimerMsg.Stop();
+            searchTimerMsg.Start();
+        }
+        private void chkMsgComFalha_CheckedChanged(object sender, EventArgs e)
+        {
+            ApplyFiltersAsyncMensagens();
+        }
+
+        #endregion
     }
 }

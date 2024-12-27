@@ -50,7 +50,7 @@ namespace ZapEnvioSeguro.Classes
             }
             catch (SqlException ex)
             {
-                throw; // Retorna null em caso de erro
+                throw new Exception(ex.Message);
             }
         }
 
@@ -81,7 +81,7 @@ namespace ZapEnvioSeguro.Classes
             }
             catch (SqlException ex)
             {
-                throw; // Retorna null em caso de erro
+                throw new Exception(ex.Message);
             }
         }
 
@@ -107,7 +107,7 @@ namespace ZapEnvioSeguro.Classes
             }
             catch (SqlException ex)
             {
-                throw; // Retorna falha
+                throw new Exception(ex.Message);
             }
         }
 
@@ -134,7 +134,7 @@ namespace ZapEnvioSeguro.Classes
             }
             catch (SqlException ex)
             {
-                throw;
+                throw new Exception(ex.Message);
             }
         }
 
@@ -160,7 +160,7 @@ namespace ZapEnvioSeguro.Classes
             }
             catch (SqlException ex)
             {
-                throw; // Retorna null em caso de erro
+                throw new Exception(ex.Message);
             }
         }
 
@@ -214,7 +214,7 @@ namespace ZapEnvioSeguro.Classes
                 {
                     await transaction.RollbackAsync();
                 }
-                throw;
+                throw new Exception(ex.Message);
             }
         }
     }

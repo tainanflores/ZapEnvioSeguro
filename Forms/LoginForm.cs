@@ -21,17 +21,22 @@ namespace ZapEnvioSeguro.Forms {
             string appVersion = Application.ProductVersion;
             lbVersaoAtualUpdate.Text = appVersion;
             labelVersion.Text = appVersion;
-
-            await UpdateMyApp();
-            GetDeviceId();
+            this.Enabled = false;
 
             string savedEmail = Properties.Settings.Default.UserEmail;
-
             if (!string.IsNullOrEmpty(savedEmail))
             {
                 txtEmail.Text = savedEmail;
                 chkSaveLogin.Checked = true;
             }
+
+            GetDeviceId();
+
+#if !DEBUG
+            await UpdateMyApp();
+#endif
+            this.Enabled = true;
+            
         }
 
         private async Task UpdateMyApp()
@@ -49,6 +54,7 @@ namespace ZapEnvioSeguro.Forms {
 
             panelUpdate.Invoke((Action)(() => panelUpdate.Visible = true));
             panelLogin.Invoke((Action)(() => panelLogin.Enabled = false));
+            panelLogin.Invoke((Action)(() => lbNovaVersaoUpdate.Text = newVersion.TargetFullRelease.ToString()));
             progressBarUpdate.Invoke((Action)(() => progressBarUpdate.Value = 0));
             lbStatusUpdate.Invoke((Action)(() => lbStatusUpdate.Text = "Baixando nova versão..."));
 
@@ -80,7 +86,6 @@ namespace ZapEnvioSeguro.Forms {
 
                 if (!loginSuccess)
                 {
-
                     MessageBox.Show("Falha no login.");
                     btnLogin.Enabled = true;
                 }
@@ -95,6 +100,7 @@ namespace ZapEnvioSeguro.Forms {
             {
                 SystemSounds.Hand.Play();
 
+                if (ex.Message == "Senha incorreta.") txtPassword.Clear();
                 MessageBox.Show($"{ex.Message}");
 
                 this.Enabled = true;
@@ -168,6 +174,11 @@ namespace ZapEnvioSeguro.Forms {
                 e.SuppressKeyPress = true;
                 btnLogin.PerformClick();
             }
+        }
+
+        private void chkVerSenha_CheckedChanged_1(object sender, EventArgs e)
+        {
+            txtPassword.UseSystemPasswordChar = !chkVerSenha.Checked;
         }
     }
 

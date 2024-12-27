@@ -9,10 +9,10 @@
 		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
 		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
 
-		<Version>0.0.4</Version>
+		<Version>0.0.5</Version>
 		<AssemblyVersion>1.0.0</AssemblyVersion>
-		<FileVersion>0.0.4</FileVersion>
-		<InformationalVersion>0.0.4</InformationalVersion>
+		<FileVersion>0.0.5</FileVersion>
+		<InformationalVersion>0.0.5</InformationalVersion>
 		
 		<AssemblyTitle>ZapEnvioSeguro</AssemblyTitle>
 		<!-- Nome do aplicativo -->
@@ -88,6 +88,9 @@
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Update="Resources\tenor.gif">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
