@@ -9,9 +9,10 @@ namespace ZapEnvioSeguro.Classes
     internal static class Evento
     {
         public static long
-            IdEmpresa = 1;
+            IdEmpresa;
 
         public static string
-            DeviceId;
+            DeviceId,
+            TelefoneOrigem;
     }
 }
