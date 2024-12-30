@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
 using ZapEnvioSeguro.Classes;
 
@@ -8,24 +9,23 @@ namespace ZapEnvioSeguro.Forms
     public partial class ContatoForm : Form
     {
         private long contatoId;
+        private DataTable dtContato;
         private MainForm mainForm;
         private DatabaseHelper dbHelper;
 
-        public ContatoForm(MainForm form, long id)
+        public ContatoForm(MainForm form, DataTable dt)
         {
             InitializeComponent();
             mainForm = form;
-            contatoId = id;
-            dbHelper = new DatabaseHelper();
-
-            
+            dtContato = dt;
+            dbHelper = new DatabaseHelper();            
         }
 
         private void ContatoForm_Load(object sender, EventArgs e)
         {
             txtTelefone.MaxLength = 15;
             this.Enabled = false;
-            if (contatoId == 0)
+            if (dtContato == null)
             {
                 lblTitulo.Text = "Adicionar Novo Contato";
                 btnSalvar.Text = "Adicionar";
@@ -38,24 +38,17 @@ namespace ZapEnvioSeguro.Forms
             this.Enabled = true;
         }
 
-        private async void CarregarDadosContato()
+        private void CarregarDadosContato()
         {
             try
             {
-                // SQL Server query
-                string query = "SELECT Nome, Telefone, Sexo FROM Contatos WHERE Id = @Id";
-                var parameters = new SqlParameter[] {
-                    new SqlParameter("@Id", contatoId)
-                };
-
-                DataTable dataTable = await dbHelper.ExecuteQueryAsync(query, parameters);
-
-                if (dataTable.Rows.Count > 0)
+                if (dtContato.Rows.Count > 0)
                 {
-                    DataRow row = dataTable.Rows[0];
+                    DataRow row = dtContato.Rows[0];
                     txtNome.Text = row["Nome"].ToString();
                     txtTelefone.Text = row["Telefone"].ToString();
                     cmbSexo.SelectedItem = row["Sexo"].ToString();
+                    contatoId = Int64.Parse(row["Id"].ToString());
                 }
                 else
                 {
@@ -93,7 +86,7 @@ namespace ZapEnvioSeguro.Forms
                 string query;
                 SqlParameter[] parameters;
 
-                if (contatoId == 0) // Inserir novo contato
+                if (dtContato == null) // Inserir novo contato
                 {
                     query = "INSERT INTO Contatos (Nome, Telefone, Sexo) VALUES (@Nome, @Telefone, @Sexo)";
                     parameters = new SqlParameter[]
@@ -111,17 +104,17 @@ namespace ZapEnvioSeguro.Forms
                         new SqlParameter("@Nome", nome),
                         new SqlParameter("@Telefone", telefone),
                         new SqlParameter("@Sexo", sexo == null ? "O" : sexo.ToString()),
-                        new SqlParameter("@Id", contatoId)
+                        new SqlParameter("@Id", dtContato.Rows[0]["Id"])
                     };
                 }
                 // Executa a query (inserção ou atualização)
                 await dbHelper.ExecuteNonQueryAsync(query, parameters);
 
-                MessageBox.Show(contatoId == 0 ? "Novo contato adicionado com sucesso!" : "Contato atualizado com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(dtContato == null ? "Novo contato adicionado com sucesso!" : "Contato atualizado com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 if (mainForm != null)
                 {
-                    mainForm.LoadContacts(); // Atualiza os contatos na tela principal
+                    await mainForm.LoadContacts(); // Atualiza os contatos na tela principal
                 }
 
                 this.Close(); // Fecha o formulário

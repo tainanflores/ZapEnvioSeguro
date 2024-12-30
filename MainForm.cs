@@ -1,6 +1,9 @@
 using System.Data;
+using System.Globalization;
 using System.Media;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
 using Microsoft.Web.WebView2.Core;
 using Newtonsoft.Json;
@@ -48,6 +51,10 @@ namespace ZapEnvioSeguro
 
         private static long telefoneIdEnviando;
 
+        private string 
+            mensagemTextoEnviando,
+            telefoneEnviandoSerialized;
+
         private const int timeoutSeconds = 25;
 
         public MainForm()
@@ -62,18 +69,26 @@ namespace ZapEnvioSeguro
 
         private void ShowLoading()
         {
+            int panelSize = 200;
+
             overlayPanel = new Panel
             {
-                Dock = DockStyle.Fill,
-                BackColor = Color.White,
+                Size = new Size(panelSize, panelSize),
+                BackColor = Color.AliceBlue,
                 Parent = this,
                 Visible = true
             };
-            string gifPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "tenor.gif");
+
+            overlayPanel.Location = new Point(
+                (this.ClientSize.Width - overlayPanel.Width) / 2,
+                (this.ClientSize.Height - overlayPanel.Height) / 2
+            );
+
+            string gifPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "loading.gif");
             loadingGif = new PictureBox
             {
                 Image = Image.FromFile(gifPath),
-                BackColor = Color.Transparent, // TransparÍncia no PictureBox
+                BackColor = Color.FromArgb(0,0,0,0), // TransparÍncia no PictureBox
                 Size = new Size(100, 100), // Tamanho do PictureBox
                 SizeMode = PictureBoxSizeMode.Zoom, // Ajusta o GIF dentro do PictureBox
                 Parent = overlayPanel
@@ -105,7 +120,7 @@ namespace ZapEnvioSeguro
             await Task.WhenAll(LoadContacts(), LoadMessages());
 
             HideLoading();
-
+            tabControl1.Enabled = true;
         }
 
         private async void MainForm_Load(object sender, EventArgs e)
@@ -114,6 +129,7 @@ namespace ZapEnvioSeguro
             {
                 Invoke((Action)ShowLoading);
             });
+            tabControl1.Enabled = false;
 
             await wppConnect.DownloadWppJs();
 
@@ -229,7 +245,7 @@ namespace ZapEnvioSeguro
                 ApplyFiltersAsync();
                 btnRemoverFiltros.Enabled = true;
             }
-            else if (chkFiltroBusiness.Checked || chkFiltroSemConversa.Checked)
+            else if (chkFiltroBusiness.Checked || chkFiltroSemConversa.Checked || cmbZapOrigem.SelectedIndex != 0)
             {
                 filtroAtivo = true;
                 ApplyFiltersAsync();
@@ -250,6 +266,7 @@ namespace ZapEnvioSeguro
             chkFiltroDDD.Checked = false;
             chkFiltroDias.Checked = false;
             btnRemoverFiltros.Enabled = false;
+            cmbZapOrigem.SelectedIndex = 0;
 
             ApplyFiltersAsync();
         }
@@ -287,6 +304,7 @@ namespace ZapEnvioSeguro
             if (chkFiltroDias.Checked)
             {
                 txtDias.Enabled = true;
+                txtDias.Focus();
             }
             else
             {
@@ -300,6 +318,7 @@ namespace ZapEnvioSeguro
             if (chkFiltroDDD.Checked)
             {
                 txtDDD.Enabled = true;
+                txtDDD.Focus();
             }
             else
             {
@@ -309,12 +328,22 @@ namespace ZapEnvioSeguro
         }
 
         private void txtBusca_TextChanged(object sender, EventArgs e)
-        {
-            // Reinicia o Timer a cada alteraÁ„o no texto
+        {            
             searchTimer.Stop();
             searchTimer.Start();
         }
 
+        private void txtBusca_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (chkBuscaTelefone.Checked)
+            {
+                if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
+                {
+                    SystemSounds.Beep.Play();
+                    e.Handled = true;
+                }
+            }
+        }
         private void chkSelecionarTodos_CheckedChanged(object sender, EventArgs e)
         {
             if (filtrandoContatos)
@@ -466,7 +495,7 @@ namespace ZapEnvioSeguro
             }
         }
 
-        private void dataGridViewContatos_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private async void dataGridViewContatos_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex < 0)
                 return;
@@ -479,8 +508,18 @@ namespace ZapEnvioSeguro
                 if (e.ColumnIndex == dataGridViewContatos.Columns["Editar"].Index && e.RowIndex >= 0)
                 {
                     long contatoId = contato.Id;
+                    string query = "SELECT Id, Nome, Telefone, Sexo FROM Contatos WHERE Id = @Id";
+                    var parameters = new SqlParameter[] {
+                        new SqlParameter("@Id", contatoId)
+                    };
 
-                    ContatoForm editarForm = new ContatoForm(this, contatoId);
+                    ShowLoading();
+
+                    DataTable dataTable = await dbHelper.ExecuteQueryAsync(query, parameters);
+
+                    HideLoading();
+
+                    ContatoForm editarForm = new ContatoForm(this, dataTable);
                     editarForm.StartPosition = FormStartPosition.CenterParent;
 
                     editarForm.ShowDialog(this);
@@ -540,7 +579,7 @@ namespace ZapEnvioSeguro
         {
 
             var query = $"SELECT " +
-                 $"Id, Nome, Telefone, Telefone_Serialized, Sexo, DateLastReceivedMsg, DateLastSentMsg, IsBusiness, PushName, IdEmpresa " +
+                 $"Id, Nome, Telefone, Telefone_Serialized, Sexo, DateLastReceivedMsg, DateLastSentMsg, IsBusiness, PushName, IdEmpresa, TelefoneOrigem " +
                  $"FROM " +
                  $"Contatos " +
                  $"WHERE IdEmpresa = @IdEmpresa";
@@ -569,7 +608,8 @@ namespace ZapEnvioSeguro
                         IsBusiness = row.IsNull("IsBusiness") ? false : (bool)row["IsBusiness"],
                         PushName = row["PushName"].ToString(),
                         IdEmpresa = (long)row["IdEmpresa"],
-                        Selecionado = false // Inicializa como n„o selecionado
+                        Selecionado = false, // Inicializa como n„o selecionado
+                        TelefoneOrigem = row["TelefoneOrigem"].ToString()
                     });
                 }
 
@@ -588,6 +628,7 @@ namespace ZapEnvioSeguro
                 finally
                 {
                     dataGridViewContatos.ResumeDrawing();
+                    InicializarComboBoxZapOrigem();
                     lbQtdFiltrados.Text = $"{contatosListVirtualFiltered.Count.ToString()} Contatos";
                 }
 
@@ -596,6 +637,26 @@ namespace ZapEnvioSeguro
             {
                 MessageBox.Show($"Erro ao carregar contatos: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void InicializarComboBoxZapOrigem()
+        {
+            // Adiciona a opÁ„o "Todos"
+            cmbZapOrigem.Items.Clear();
+            cmbZapOrigem.Items.Add("Todos");
+
+            // ObtÈm os valores ˙nicos da coluna TelefoneOrigem
+            var telefonesUnicos = contatosList
+                .Select(contato => contato.TelefoneOrigem)
+                .Distinct()
+                .OrderBy(telefone => telefone)
+                .ToList();
+
+            // Adiciona os valores ˙nicos ao ComboBox
+            cmbZapOrigem.Items.AddRange(telefonesUnicos.ToArray());
+
+            // Define "Todos" como o valor padr„o selecionado
+            cmbZapOrigem.SelectedIndex = 0;
         }
 
         private async void ApplyFiltersAsync()
@@ -607,6 +668,7 @@ namespace ZapEnvioSeguro
 
                 // Captura o texto de busca atual
                 string searchTerm = string.Empty;
+                string zapOrigem = cmbZapOrigem.SelectedItem.ToString();
 
                 if (txtBusca.InvokeRequired)
                 {
@@ -619,6 +681,8 @@ namespace ZapEnvioSeguro
                 {
                     searchTerm = txtBusca.Text.Trim().ToLower();
                 }
+
+                searchTerm = RemoverAcentos(searchTerm);
 
                 var filteredList = await Task.Run(() =>
                 {
@@ -634,6 +698,11 @@ namespace ZapEnvioSeguro
                         if (chkFiltroBusiness.Checked)
                         {
                             query = query.Where(c => c.IsBusiness);
+                        }
+
+                        if (zapOrigem != "Todos")
+                        {
+                            query = query.Where(c => c.TelefoneOrigem == zapOrigem);
                         }
 
                         // Filtro por Dias
@@ -654,7 +723,14 @@ namespace ZapEnvioSeguro
                     // Filtro de Busca em Tempo Real
                     if (!string.IsNullOrEmpty(searchTerm))
                     {
-                        query = query.Where(c => c.Nome.ToLower().Contains(searchTerm));
+                        if (chkBuscaTelefone.Checked)
+                        {
+                            query = query.Where(c => string.Concat(c.Telefone.Where(char.IsDigit)).Contains(searchTerm));
+                        }
+                        else
+                        {
+                            query = query.Where(c => RemoverAcentos(c.Nome.ToLower()).Contains(searchTerm));
+                        }
                     }
 
                     return query.ToList();
@@ -683,6 +759,22 @@ namespace ZapEnvioSeguro
             {
                 MessageBox.Show($"Erro ao aplicar filtros: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private string RemoverAcentos(string texto)
+        {
+            var normalizedString = texto.Normalize(NormalizationForm.FormD);
+            var stringBuilder = new StringBuilder();
+
+            foreach (var character in normalizedString)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
+                {
+                    stringBuilder.Append(character);
+                }
+            }
+
+            return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
         }
 
         public void UpdateDataGridView(List<Contato>? filteredContacts = null)
@@ -748,7 +840,7 @@ namespace ZapEnvioSeguro
 
         private void btnAdicionarContato_Click(object sender, EventArgs e)
         {
-            ContatoForm adicionarForm = new ContatoForm(this, 0);
+            ContatoForm adicionarForm = new ContatoForm(this, null);
             adicionarForm.StartPosition = FormStartPosition.CenterParent;
             adicionarForm.ShowDialog(this);
         }
@@ -999,8 +1091,8 @@ namespace ZapEnvioSeguro
                 while (!wppInjetado)
                 {
                     await Task.Delay(500);
-                }              
-                
+                }
+
                 await webView21.ExecuteScriptAsync(WhatsAppWebScripts.ScriptEnviarMensagem);
                 return;
             }
@@ -1049,19 +1141,19 @@ namespace ZapEnvioSeguro
                             new SqlParameter("@DataEnvio", DateTime.Now.ToString()),
                             new SqlParameter("@IdEmpresa", Evento.IdEmpresa),
                             new SqlParameter("@SucessoEnviada", enviouSucesso)
-                        };                        
+                        };
 
                         var idMsg = await dbHelper.InsertDataAsync(query, parameters);
                     }
                     else
                     {
                         query = "UPDATE MensagemEnviada SET SucessoEnviada = @SucessoEnviada WHERE Id = @Id";
-                       
+
                         parameters = new SqlParameter[]
                         {
                             new SqlParameter("@Id",existeMsg),
                             new SqlParameter("@SucessoEnviada", enviouSucesso)
-                        };                       
+                        };
 
                         await dbHelper.ExecuteNonQueryAsync(query, parameters);
                     }
@@ -1102,6 +1194,12 @@ namespace ZapEnvioSeguro
                 InjetarScriptWebview(WhatsAppWebScripts.apiMessageHandler);
                 wppInjetado = true;
                 return;
+            }
+
+            if (content.Contains("TelefoneOrigem:"))
+            {
+                var telefone = TelefoneFormatado(content.Split(':')[1].Replace("\\\"", ""));
+                Evento.TelefoneOrigem = telefone;
             }
 
             if (content.StartsWith("[{\"Telefone") && sincronizarContatos)
@@ -1154,6 +1252,7 @@ namespace ZapEnvioSeguro
 
                 progressForm.Close();
                 iniciouSincronizar = false;
+                await LoadContacts();
                 InjetarScriptWebview("obterMensagensFiltradas();");
                 return;
 
@@ -1187,7 +1286,7 @@ namespace ZapEnvioSeguro
                 }
 
                 return;
-            }            
+            }
 
             if (content.StartsWith("{\"id\":{\"fromMe"))
             {
@@ -1201,24 +1300,16 @@ namespace ZapEnvioSeguro
 
                     if (response.Id.FromMe)
                     {
-                        if(isSendingMessage)
+                        if (isSendingMessage)
                         {
                             string telefoneEnviando = response.To;
-                            string msg = response.Body;
+                            string msg = response.Body;                           
 
+                            string idZap = telefoneEnviandoSerialized;
 
-                            string query = "SELECT Telefone_Serialized FROM Contatos WHERE Id = @Id";
-                            SqlParameter[] sp = [ new SqlParameter("@Id", telefoneIdEnviando) ];
-
-                            var idZap = await dbHelper.ExecuteScalarAsync(query, sp);
-
-                            if (idZap.ToString() == telefoneEnviando)
+                            if (idZap == telefoneEnviando)
                             {
-                                SqlParameter[] parameters;
-                                query = "SELECT Mensagem FROM Mensagens WHERE Id = @Id";
-                                sp = [ new SqlParameter("@Id", mensagemIdEnviando) ];
-
-                                var textoMsgEnviando = await dbHelper.ExecuteScalarAsync(query, sp);
+                                string textoMsgEnviando = mensagemTextoEnviando;
 
                                 bool enviouSucesso = true;
 
@@ -1298,7 +1389,7 @@ namespace ZapEnvioSeguro
                     var contato = contatoList[i];
                     // Verificar se o contato j· existe na lista carregada do banco
                     var contatoExistente = contatosExistentesDataTable.Rows.Cast<DataRow>()
-                        .FirstOrDefault(row => row["Telefone"].ToString() == contato.Telefone);
+                        .FirstOrDefault(row => row["Telefone_Serialized"].ToString() == contato.Telefone_Serialized);
 
                     string query;
                     SqlParameter[] parameters;
@@ -1323,8 +1414,8 @@ namespace ZapEnvioSeguro
                     else
                     {
                         // Inserir o novo contato
-                        query = "INSERT INTO Contatos (Telefone, Telefone_Serialized, Nome, PushName, IsBusiness, IdEmpresa) " +
-                                "VALUES (@Telefone, @Telefone_Serialized, @Nome, @PushName, @IsBusiness, @IdEmpresa);";
+                        query = "INSERT INTO Contatos (Telefone, Telefone_Serialized, Nome, PushName, IsBusiness, IdEmpresa, TelefoneOrigem) " +
+                                "VALUES (@Telefone, @Telefone_Serialized, @Nome, @PushName, @IsBusiness, @IdEmpresa, @TelefoneOrigem);";
                         parameters = new SqlParameter[]
                         {
                             new SqlParameter("@Telefone", contato.Telefone),
@@ -1332,7 +1423,8 @@ namespace ZapEnvioSeguro
                             new SqlParameter("@Nome", contato.Nome ?? contato.PushName),
                             new SqlParameter("@PushName", contato.PushName ?? contato.Nome),
                             new SqlParameter("@IsBusiness", contato.IsBusiness),
-                            new SqlParameter("@IdEmpresa", Evento.IdEmpresa)
+                            new SqlParameter("@IdEmpresa", Evento.IdEmpresa),
+                            new SqlParameter("@TelefoneOrigem", Evento.TelefoneOrigem)
                          };
                     }
 
@@ -1350,7 +1442,7 @@ namespace ZapEnvioSeguro
 
                     }
 
-                }                
+                }
 
                 lbNovosContatos.Visible = false;
                 lbCliqueImportar.Visible = false;
@@ -1370,7 +1462,7 @@ namespace ZapEnvioSeguro
         {
             try
             {
-                string query = "UPDATE Contatos SET DateLastReceivedMsg = @DateLastReceivedMsg WHERE Telefone_Serialized = @Telefone_Serialized AND IdEmpresa = @IdEmpresa";                
+                string query = "UPDATE Contatos SET DateLastReceivedMsg = @DateLastReceivedMsg WHERE Telefone_Serialized = @Telefone_Serialized AND IdEmpresa = @IdEmpresa";
 
                 SqlParameter[] parameters;
                 var queries = new List<Tuple<string, SqlParameter[]>>();
@@ -1391,9 +1483,9 @@ namespace ZapEnvioSeguro
                     new SqlParameter("@DateLastReceivedMsg", lastReceived.AddHours(-3)),
                     new SqlParameter("@Telefone_Serialized", contato.Telefone),
                     new SqlParameter("@IdEmpresa", Evento.IdEmpresa)
-                    };                   
+                    };
 
-                    queries.Add(Tuple.Create(query, parameters));                    
+                    queries.Add(Tuple.Create(query, parameters));
                 }
 
                 await dbHelper.ExecuteTransactionAsync(queries, progress);
@@ -1498,7 +1590,8 @@ namespace ZapEnvioSeguro
                     DateLastSentMsg = null, // Mesma coisa para a data da ˙ltima mensagem enviada
                     LastSentMsgId = null, // Mesma lÛgica
                     IdEmpresa = 0, // ID da empresa ser· setado posteriormente ou conforme sua lÛgica
-                    Selecionado = false // Pode ser setado conforme necess·rio
+                    Selecionado = false, // Pode ser setado conforme necess·rio
+                    TelefoneOrigem = Evento.TelefoneOrigem
                 };
 
                 contatoList.Add(contato);
@@ -1591,6 +1684,20 @@ namespace ZapEnvioSeguro
             }
         }
 
+        private void btnVarNome_Click(object sender, EventArgs e)
+        {
+            if(chkUsarNomeSalvo.Checked)
+            {
+                txtMensagem.Text += " {nome_salvo}";
+            }
+            else
+            {
+                txtMensagem.Text += " {nome_zap}";
+            }
+            txtMensagem.Focus();
+            txtMensagem.SelectionStart = txtMensagem.Text.Length;
+        }
+
         private async void btnEnviar_Click(object sender, EventArgs e)
         {
             btnEnviar.Enabled = false;
@@ -1675,6 +1782,17 @@ namespace ZapEnvioSeguro
                 foreach (var contato in contatosSelecionadosParaEnvio)
                 {
                     current++;
+                    string nomeZap = Regex.Replace(contato.PushName.ToString().Trim(), @"[^a-zA-Z·‡„‚‰ÈËÍÎÌÏÓÔÛÚÙıˆ˙˘˚¸Á«\s]", string.Empty);
+                    string nomeSalvo = Regex.Replace(contato.Nome.ToString().Trim(), @"[^a-zA-Z·‡„‚‰ÈËÍÎÌÏÓÔÛÚÙıˆ˙˘˚¸Á«\s]", string.Empty);
+
+                    if (string.IsNullOrEmpty(nomeSalvo))
+                    {
+                        nomeSalvo = nomeZap;
+                    }
+
+                    string mensagemAlterada = mensagem.Replace("{nome_zap}", $"{nomeZap}").Replace("{nome_salvo}", $"{nomeSalvo}");
+                    mensagemTextoEnviando = mensagemAlterada;
+                    telefoneEnviandoSerialized = contato.Telefone_Serialized.ToString();
                     //tabControl1.SelectTab(0);
                     telefoneIdEnviando = contato.Id;
                     int percent = (int)((double)current / total * 100);
@@ -1682,7 +1800,7 @@ namespace ZapEnvioSeguro
 
                     SendTimer.Start();
 
-                    await EnviarMensagemZap(contato.Telefone, mensagem);
+                    await EnviarMensagemZap(contato.Telefone, mensagemAlterada);
 
                     SendTimer.Stop();
 
@@ -1834,6 +1952,18 @@ namespace ZapEnvioSeguro
 
                 foreach (var contato in contatosEnviar)
                 {
+                    string nomeZap = Regex.Replace(contato.PushName.ToString().Trim(), @"[^a-zA-Z·‡„‚‰ÈËÍÎÌÏÓÔÛÚÙıˆ˙˘˚¸Á«\s]", string.Empty);
+                    string nomeSalvo = Regex.Replace(contato.Nome.ToString().Trim(), @"[^a-zA-Z·‡„‚‰ÈËÍÎÌÏÓÔÛÚÙıˆ˙˘˚¸Á«\s]", string.Empty);
+
+                    if (string.IsNullOrEmpty(nomeSalvo))
+                    {
+                        nomeSalvo = nomeZap;
+                    }
+
+                    string mensagemAlterada = mensagem.Replace("{nome_zap}", $"{nomeZap}").Replace("{nome_salvo}", $"{nomeSalvo}");
+                    mensagemTextoEnviando = mensagemAlterada;
+                    telefoneEnviandoSerialized = contato.Telefone_Serialized.ToString();
+
                     current++;
                     //tabControl1.SelectTab(0);
                     telefoneIdEnviando = contato.Id;
@@ -1841,7 +1971,7 @@ namespace ZapEnvioSeguro
                     progress?.Report(new ProgressReport { Percent = percent, Message = $"{current} de {total}" });
 
                     SendTimer.Start();
-                    await EnviarMensagemZap(contato.Telefone, mensagem);
+                    await EnviarMensagemZap(contato.Telefone, mensagemAlterada);
                     SendTimer.Stop();
 
                     query = "SELECT COUNT(*) FROM MensagemEnviada WHERE MensagemId = @MensagemId AND SucessoEnviada = 1";
@@ -2092,7 +2222,7 @@ namespace ZapEnvioSeguro
         //    }
         //}
 
-        private void dataGridViewMensagens_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private async void dataGridViewMensagens_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex < 0)
                 return;
@@ -2105,7 +2235,15 @@ namespace ZapEnvioSeguro
                 {
                     long mensagemId = mensagem.Id;
 
-                    VerMensagemForm mensagemForm = new VerMensagemForm(this, mensagemId);
+                    string query = "SELECT * FROM Mensagens WHERE Id = @Id";
+                    SqlParameter[] sp = new SqlParameter[]
+                    {
+                        new SqlParameter("@Id",mensagemId)
+                    };
+                    ShowLoading();
+                    DataTable dt = await dbHelper.ExecuteQueryAsync(query, sp);
+                    HideLoading();
+                    VerMensagemForm mensagemForm = new VerMensagemForm(this, dt);
                     mensagemForm.StartPosition = FormStartPosition.CenterParent;
 
                     mensagemForm.ShowDialog(this);
@@ -2339,15 +2477,5 @@ namespace ZapEnvioSeguro
         }
 
         #endregion
-
-        private void tabEnviarMsg_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void tabEnviarMsg_Click_1(object sender, EventArgs e)
-        {
-
-        }
     }
 }

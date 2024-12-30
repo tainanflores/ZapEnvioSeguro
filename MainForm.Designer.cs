@@ -33,6 +33,7 @@
             tabWhatsApp = new TabPage();
             webView21 = new Microsoft.Web.WebView2.WinForms.WebView2();
             tabContatos = new TabPage();
+            chkBuscaTelefone = new CheckBox();
             lbQtdSelcionados = new Label();
             lbAnalisandoContatos = new Label();
             panel2 = new Panel();
@@ -45,6 +46,9 @@
             btnAdicionarContato = new Button();
             chkSelecionarTodos = new CheckBox();
             panel1 = new Panel();
+            txtDias = new TextBox();
+            label9 = new Label();
+            cmbZapOrigem = new ComboBox();
             chkFiltroBusiness = new CheckBox();
             chkFiltroSemConversa = new CheckBox();
             txtDDD = new TextBox();
@@ -53,11 +57,13 @@
             chkFiltroDias = new CheckBox();
             btnAplicarFiltros = new Button();
             label5 = new Label();
-            txtDias = new TextBox();
             label2 = new Label();
             label1 = new Label();
             txtBusca = new TextBox();
             tabEnviarMsg = new TabPage();
+            chkUsarNomeSalvo = new CheckBox();
+            label10 = new Label();
+            btnVarNome = new Button();
             btConfirmarOpcoesMensagem = new Button();
             lbQuantidadeContatos = new Label();
             label3 = new Label();
@@ -84,6 +90,7 @@
             chkMsgComFalha = new CheckBox();
             label14 = new Label();
             txtBuscaMsg = new TextBox();
+            sqlCommand1 = new Microsoft.Data.SqlClient.SqlCommand();
             tabControl1.SuspendLayout();
             tabWhatsApp.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)webView21).BeginInit();
@@ -143,6 +150,7 @@
             // 
             // tabContatos
             // 
+            tabContatos.Controls.Add(chkBuscaTelefone);
             tabContatos.Controls.Add(lbQtdSelcionados);
             tabContatos.Controls.Add(lbAnalisandoContatos);
             tabContatos.Controls.Add(panel2);
@@ -164,6 +172,17 @@
             tabContatos.TabIndex = 1;
             tabContatos.Text = "Contatos";
             tabContatos.UseVisualStyleBackColor = true;
+            // 
+            // chkBuscaTelefone
+            // 
+            chkBuscaTelefone.Cursor = Cursors.Hand;
+            chkBuscaTelefone.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            chkBuscaTelefone.Location = new Point(404, 20);
+            chkBuscaTelefone.Name = "chkBuscaTelefone";
+            chkBuscaTelefone.Size = new Size(138, 25);
+            chkBuscaTelefone.TabIndex = 22;
+            chkBuscaTelefone.Text = "Busca por Telefone";
+            chkBuscaTelefone.UseVisualStyleBackColor = true;
             // 
             // lbQtdSelcionados
             // 
@@ -324,6 +343,9 @@
             // panel1
             // 
             panel1.BorderStyle = BorderStyle.FixedSingle;
+            panel1.Controls.Add(txtDias);
+            panel1.Controls.Add(label9);
+            panel1.Controls.Add(cmbZapOrigem);
             panel1.Controls.Add(chkFiltroBusiness);
             panel1.Controls.Add(chkFiltroSemConversa);
             panel1.Controls.Add(txtDDD);
@@ -332,40 +354,73 @@
             panel1.Controls.Add(chkFiltroDias);
             panel1.Controls.Add(btnAplicarFiltros);
             panel1.Controls.Add(label5);
-            panel1.Controls.Add(txtDias);
             panel1.Location = new Point(0, 84);
             panel1.Name = "panel1";
             panel1.Size = new Size(1256, 51);
             panel1.TabIndex = 3;
             // 
+            // txtDias
+            // 
+            txtDias.BackColor = SystemColors.ButtonFace;
+            txtDias.Cursor = Cursors.IBeam;
+            txtDias.Enabled = false;
+            txtDias.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtDias.Location = new Point(175, 13);
+            txtDias.Name = "txtDias";
+            txtDias.Size = new Size(56, 25);
+            txtDias.TabIndex = 5;
+            txtDias.KeyPress += txtDias_KeyPress;
+            // 
+            // label9
+            // 
+            label9.BackColor = SystemColors.ButtonFace;
+            label9.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label9.Location = new Point(816, 12);
+            label9.Name = "label9";
+            label9.Size = new Size(32, 25);
+            label9.TabIndex = 16;
+            label9.Text = "Zap";
+            label9.TextAlign = ContentAlignment.MiddleLeft;
+            // 
+            // cmbZapOrigem
+            // 
+            cmbZapOrigem.BackColor = SystemColors.ButtonFace;
+            cmbZapOrigem.Location = new Point(850, 12);
+            cmbZapOrigem.Name = "cmbZapOrigem";
+            cmbZapOrigem.Size = new Size(148, 25);
+            cmbZapOrigem.TabIndex = 0;
+            // 
             // chkFiltroBusiness
             // 
+            chkFiltroBusiness.BackColor = SystemColors.ButtonFace;
             chkFiltroBusiness.Cursor = Cursors.Hand;
             chkFiltroBusiness.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            chkFiltroBusiness.Location = new Point(514, 13);
+            chkFiltroBusiness.Location = new Point(462, 13);
             chkFiltroBusiness.Name = "chkFiltroBusiness";
             chkFiltroBusiness.Size = new Size(86, 25);
             chkFiltroBusiness.TabIndex = 15;
             chkFiltroBusiness.Text = "Business?";
-            chkFiltroBusiness.UseVisualStyleBackColor = true;
+            chkFiltroBusiness.UseVisualStyleBackColor = false;
             // 
             // chkFiltroSemConversa
             // 
+            chkFiltroSemConversa.BackColor = SystemColors.ButtonFace;
             chkFiltroSemConversa.Cursor = Cursors.Hand;
             chkFiltroSemConversa.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            chkFiltroSemConversa.Location = new Point(669, 13);
+            chkFiltroSemConversa.Location = new Point(562, 13);
             chkFiltroSemConversa.Name = "chkFiltroSemConversa";
             chkFiltroSemConversa.Size = new Size(248, 25);
             chkFiltroSemConversa.TabIndex = 14;
             chkFiltroSemConversa.Text = "Não incluir contatos sem conversa";
-            chkFiltroSemConversa.UseVisualStyleBackColor = true;
+            chkFiltroSemConversa.UseVisualStyleBackColor = false;
             // 
             // txtDDD
             // 
+            txtDDD.BackColor = SystemColors.ButtonFace;
             txtDDD.Cursor = Cursors.IBeam;
             txtDDD.Enabled = false;
             txtDDD.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            txtDDD.Location = new Point(389, 13);
+            txtDDD.Location = new Point(359, 13);
             txtDDD.Name = "txtDDD";
             txtDDD.Size = new Size(59, 25);
             txtDDD.TabIndex = 13;
@@ -375,9 +430,9 @@
             // 
             btnRemoverFiltros.Cursor = Cursors.Hand;
             btnRemoverFiltros.Enabled = false;
-            btnRemoverFiltros.Location = new Point(1127, 13);
+            btnRemoverFiltros.Location = new Point(1136, 13);
             btnRemoverFiltros.Name = "btnRemoverFiltros";
-            btnRemoverFiltros.Size = new Size(107, 25);
+            btnRemoverFiltros.Size = new Size(109, 25);
             btnRemoverFiltros.TabIndex = 12;
             btnRemoverFiltros.Text = "Remover Filtros";
             btnRemoverFiltros.UseVisualStyleBackColor = true;
@@ -385,18 +440,20 @@
             // 
             // chkFiltroDDD
             // 
+            chkFiltroDDD.BackColor = SystemColors.ButtonFace;
             chkFiltroDDD.Cursor = Cursors.Hand;
             chkFiltroDDD.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            chkFiltroDDD.Location = new Point(337, 13);
+            chkFiltroDDD.Location = new Point(307, 13);
             chkFiltroDDD.Name = "chkFiltroDDD";
             chkFiltroDDD.Size = new Size(61, 25);
             chkFiltroDDD.TabIndex = 11;
             chkFiltroDDD.Text = "DDD:";
-            chkFiltroDDD.UseVisualStyleBackColor = true;
+            chkFiltroDDD.UseVisualStyleBackColor = false;
             chkFiltroDDD.CheckedChanged += chkFiltroDDD_CheckedChanged;
             // 
             // chkFiltroDias
             // 
+            chkFiltroDias.BackColor = SystemColors.ButtonFace;
             chkFiltroDias.Cursor = Cursors.Hand;
             chkFiltroDias.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
             chkFiltroDias.Location = new Point(11, 13);
@@ -404,13 +461,13 @@
             chkFiltroDias.Size = new Size(167, 25);
             chkFiltroDias.TabIndex = 10;
             chkFiltroDias.Text = "Não entra em contato a";
-            chkFiltroDias.UseVisualStyleBackColor = true;
+            chkFiltroDias.UseVisualStyleBackColor = false;
             chkFiltroDias.CheckedChanged += chkFiltroDias_CheckedChanged;
             // 
             // btnAplicarFiltros
             // 
             btnAplicarFiltros.Cursor = Cursors.Hand;
-            btnAplicarFiltros.Location = new Point(1012, 13);
+            btnAplicarFiltros.Location = new Point(1025, 13);
             btnAplicarFiltros.Name = "btnAplicarFiltros";
             btnAplicarFiltros.Size = new Size(107, 25);
             btnAplicarFiltros.TabIndex = 8;
@@ -420,24 +477,14 @@
             // 
             // label5
             // 
+            label5.BackColor = SystemColors.ButtonFace;
             label5.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            label5.Location = new Point(238, 13);
+            label5.Location = new Point(231, 13);
             label5.Name = "label5";
             label5.Size = new Size(32, 25);
             label5.TabIndex = 7;
             label5.Text = "dias";
             label5.TextAlign = ContentAlignment.MiddleLeft;
-            // 
-            // txtDias
-            // 
-            txtDias.Cursor = Cursors.IBeam;
-            txtDias.Enabled = false;
-            txtDias.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            txtDias.Location = new Point(180, 13);
-            txtDias.Name = "txtDias";
-            txtDias.Size = new Size(56, 25);
-            txtDias.TabIndex = 5;
-            txtDias.KeyPress += txtDias_KeyPress;
             // 
             // label2
             // 
@@ -453,25 +500,29 @@
             // 
             label1.AutoSize = true;
             label1.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label1.Location = new Point(15, 22);
+            label1.Location = new Point(11, 22);
             label1.Name = "label1";
-            label1.Size = new Size(119, 17);
+            label1.Size = new Size(43, 17);
             label1.TabIndex = 1;
-            label1.Text = "Procurar Contatos";
+            label1.Text = "Busca";
             // 
             // txtBusca
             // 
             txtBusca.Cursor = Cursors.IBeam;
             txtBusca.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            txtBusca.Location = new Point(139, 19);
+            txtBusca.Location = new Point(60, 19);
             txtBusca.Name = "txtBusca";
             txtBusca.PlaceholderText = "Digite algum texto.. ";
-            txtBusca.Size = new Size(367, 25);
+            txtBusca.Size = new Size(339, 25);
             txtBusca.TabIndex = 0;
             txtBusca.TextChanged += txtBusca_TextChanged;
+            txtBusca.KeyPress += txtBusca_KeyPress;
             // 
             // tabEnviarMsg
             // 
+            tabEnviarMsg.Controls.Add(chkUsarNomeSalvo);
+            tabEnviarMsg.Controls.Add(label10);
+            tabEnviarMsg.Controls.Add(btnVarNome);
             tabEnviarMsg.Controls.Add(btConfirmarOpcoesMensagem);
             tabEnviarMsg.Controls.Add(lbQuantidadeContatos);
             tabEnviarMsg.Controls.Add(label3);
@@ -486,7 +537,40 @@
             tabEnviarMsg.Size = new Size(1256, 651);
             tabEnviarMsg.TabIndex = 2;
             tabEnviarMsg.Text = "Enviar Mensagem";
-            tabEnviarMsg.Click += tabEnviarMsg_Click_1;
+            // 
+            // chkUsarNomeSalvo
+            // 
+            chkUsarNomeSalvo.Cursor = Cursors.Hand;
+            chkUsarNomeSalvo.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            chkUsarNomeSalvo.Location = new Point(269, 478);
+            chkUsarNomeSalvo.Name = "chkUsarNomeSalvo";
+            chkUsarNomeSalvo.Size = new Size(214, 25);
+            chkUsarNomeSalvo.TabIndex = 21;
+            chkUsarNomeSalvo.Text = "Usar nome do contato Salvo";
+            chkUsarNomeSalvo.TextAlign = ContentAlignment.MiddleRight;
+            chkUsarNomeSalvo.UseVisualStyleBackColor = true;
+            // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label10.Location = new Point(29, 494);
+            label10.Name = "label10";
+            label10.Size = new Size(67, 17);
+            label10.TabIndex = 21;
+            label10.Text = "Variáveis:";
+            // 
+            // btnVarNome
+            // 
+            btnVarNome.Cursor = Cursors.Hand;
+            btnVarNome.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnVarNome.Location = new Point(29, 514);
+            btnVarNome.Name = "btnVarNome";
+            btnVarNome.Size = new Size(79, 24);
+            btnVarNome.TabIndex = 21;
+            btnVarNome.Text = "Nome";
+            btnVarNome.UseVisualStyleBackColor = true;
+            btnVarNome.Click += btnVarNome_Click;
             // 
             // btConfirmarOpcoesMensagem
             // 
@@ -803,6 +887,11 @@
             txtBuscaMsg.TabIndex = 21;
             txtBuscaMsg.TextChanged += txtBuscaMsg_TextChanged;
             // 
+            // sqlCommand1
+            // 
+            sqlCommand1.CommandTimeout = 30;
+            sqlCommand1.EnableOptimizedParameterBinding = false;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -894,5 +983,12 @@
         private Label label14;
         private TextBox txtBuscaMsg;
         private Label label8;
+        private CheckBox chkBuscaTelefone;
+        private Label label9;
+        private ComboBox cmbZapOrigem;
+        private Microsoft.Data.SqlClient.SqlCommand sqlCommand1;
+        private Label label10;
+        private Button btnVarNome;
+        private CheckBox chkUsarNomeSalvo;
     }
 }

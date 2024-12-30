@@ -8,14 +8,15 @@ namespace ZapEnvioSeguro.Forms
 {
     public partial class VerMensagemForm : Form
     {
+        private DataTable dtMessage;
         private long messageId;
         private MainForm mainForm;
         private DatabaseHelper dbHelper;
 
-        public VerMensagemForm(MainForm form, long id)
+        public VerMensagemForm(MainForm form, DataTable dt)
         {
             mainForm = form;
-            messageId = id;
+            dtMessage = dt;
             dbHelper = new DatabaseHelper();
             InitializeComponent();
         }
@@ -24,22 +25,15 @@ namespace ZapEnvioSeguro.Forms
         {
             try
             {
-                string query = "SELECT * FROM Mensagens WHERE Id = @Id";
-                SqlParameter[] sp = new SqlParameter[]
+                if (dtMessage.Rows.Count > 0)
                 {
-                new SqlParameter("@Id",messageId)
-                };
-
-                DataTable dt = await dbHelper.ExecuteQueryAsync(query, sp);
-
-                if (dt.Rows.Count > 0)
-                {
-                    DataRow row = dt.Rows[0];
+                    DataRow row = dtMessage.Rows[0];
                     txtMensagem.Text = row["Mensagem"].ToString();
                     lbDataEnvio.Text = row["DataEnvio"].ToString();
                     lbEnvioSolicitado.Text = row["QuantidadeContatosSolicitados"].ToString();
                     lbEnviosSucesso.Text = row["QuantidadeContatosSucesso"].ToString();
                     lbEnvioFalha.Text = (Int32.Parse(row["QuantidadeContatosSolicitados"].ToString()) - Int32.Parse(row["QuantidadeContatosSucesso"].ToString())).ToString();
+                    messageId = Int64.Parse(row["Id"].ToString());
 
                     if (row["FalhaInesperada"].ToString() == "True")
                     {
@@ -115,7 +109,8 @@ namespace ZapEnvioSeguro.Forms
                     IsBusiness = row.IsNull("IsBusiness") ? false : (bool)row["IsBusiness"],
                     PushName = row["PushName"].ToString(),
                     IdEmpresa = (long)row["IdEmpresa"],
-                    Selecionado = false // Inicializa como não selecionado
+                    Selecionado = false,
+                    TelefoneOrigem = row["TelefoneOrigem"].ToString()
                 });
             }
 
@@ -180,7 +175,9 @@ namespace ZapEnvioSeguro.Forms
                     IsBusiness = row.IsNull("IsBusiness") ? false : (bool)row["IsBusiness"],
                     PushName = row["PushName"].ToString(),
                     IdEmpresa = (long)row["IdEmpresa"],
-                    Selecionado = false // Inicializa como não selecionado
+                    Selecionado = false, // Inicializa como não selecionado
+                    TelefoneOrigem = row["TelefoneOrigem"].ToString()
+
                 });
             }
 

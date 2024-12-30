@@ -14,4 +14,5 @@ public class Contato
     public long? LastSentMsgId { get; set; } // ID da última mensagem enviada
     public long IdEmpresa { get; set; } // ID da empresa associada
     public bool Selecionado { get; internal set; }
+    public required string TelefoneOrigem { get; set; }
 }

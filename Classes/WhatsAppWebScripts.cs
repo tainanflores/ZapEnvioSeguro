@@ -134,6 +134,7 @@ namespace ZapEnvioSeguro.Classes
 
                         if (client) {
                             console.log(""Cliente pronto"");
+                            window.chrome.webview.postMessage(`TelefoneOrigem:${client}`);
                             clearInterval(qrClientReady);
                             clienteCarregado();
                         } else {
