@@ -45,7 +45,7 @@ namespace ZapEnvioSeguro.Forms {
 
             GithubSource source = new GithubSource(
                     repoUrl: "https://github.com/tainanflores/ZapEnvioSeguro",
-                    accessToken: "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",
+                    accessToken: "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",
                     false
                 );
             var mgr = new UpdateManager(source);
