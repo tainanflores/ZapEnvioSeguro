@@ -1026,6 +1026,7 @@ namespace ZapEnvioSeguro
             {
                 try
                 {
+                    SendTimer.Stop();
                     bool enviouSucesso = content.Contains("mensagemEnviada");
                     SqlParameter[] parameters = new SqlParameter[]
                     {
