@@ -9,10 +9,10 @@
 		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
 		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
 
-		<Version>0.0.6</Version>
+		<Version>0.0.7</Version>
 		<AssemblyVersion>1.0.0</AssemblyVersion>
-		<FileVersion>0.0.6</FileVersion>
-		<InformationalVersion>0.0.6</InformationalVersion>
+		<FileVersion>0.0.7</FileVersion>
+		<InformationalVersion>0.0.7</InformationalVersion>
 		
 		<AssemblyTitle>ZapEnvioSeguro</AssemblyTitle>
 		<!-- Nome do aplicativo -->

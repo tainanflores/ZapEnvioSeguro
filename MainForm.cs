@@ -1240,7 +1240,7 @@ namespace ZapEnvioSeguro
                         var contatoComData = new ContatoComData
                         {
                             Telefone = response.From, // O campo "From" contém o telefone
-                            DateLastReceivedMsg = DateTimeOffset.FromUnixTimeSeconds(response.T).DateTime.AddHours(-3)
+                            DateLastReceivedMsg = DateTimeOffset.FromUnixTimeSeconds(response.T).DateTime
                         };
 
                         contatosComDataList.Add(contatoComData);
@@ -1376,10 +1376,19 @@ namespace ZapEnvioSeguro
                 var queries = new List<Tuple<string, SqlParameter[]>>();
 
                 foreach (var contato in contatosComData)
-                {                    
+                {
+                    var contatoNaLista = contatosList.FirstOrDefault(c => c.Telefone_Serialized == contato.Telefone && c.IdEmpresa == Evento.IdEmpresa);
+                    if (contatoNaLista != null)
+                    {
+                        if (contatoNaLista.DateLastReceivedMsg == contato.DateLastReceivedMsg)
+                        {
+                            continue;
+                        }
+                    }
+                    DateTime lastReceived = (DateTime)contato.DateLastReceivedMsg;
                     parameters = new SqlParameter[]
                     {
-                    new SqlParameter("@DateLastReceivedMsg", contato.DateLastReceivedMsg),
+                    new SqlParameter("@DateLastReceivedMsg", lastReceived.AddHours(-3)),
                     new SqlParameter("@Telefone_Serialized", contato.Telefone),
                     new SqlParameter("@IdEmpresa", Evento.IdEmpresa)
                     };                   
@@ -1389,7 +1398,23 @@ namespace ZapEnvioSeguro
 
                 await dbHelper.ExecuteTransactionAsync(queries, progress);
 
-                await LoadContacts();
+                foreach (var contatoAtualizado in contatosComData)
+                {
+                    var contatoNaLista = contatosList.FirstOrDefault(c => c.Telefone_Serialized == contatoAtualizado.Telefone && c.IdEmpresa == Evento.IdEmpresa);
+                    if (contatoNaLista != null)
+                    {
+                        contatoNaLista.DateLastReceivedMsg = contatoAtualizado.DateLastReceivedMsg;
+                    }
+                }
+
+                foreach (var contatoAtualizado in contatosComData)
+                {
+                    var contatoNaListaVirtual = contatosListVirtualFiltered.FirstOrDefault(c => c.Telefone_Serialized == contatoAtualizado.Telefone && c.IdEmpresa == Evento.IdEmpresa);
+                    if (contatoNaListaVirtual != null)
+                    {
+                        contatoNaListaVirtual.DateLastReceivedMsg = contatoAtualizado.DateLastReceivedMsg;
+                    }
+                }
             }
             catch (Exception ex)
             {
