@@ -1239,7 +1239,7 @@ namespace ZapEnvioSeguro
                     {
                         var contatoComData = new ContatoComData
                         {
-                            Telefone = response.From, // O campo "From" contém o telefone
+                            Telefone = response.From,
                             DateLastReceivedMsg = DateTimeOffset.FromUnixTimeSeconds(response.T).DateTime
                         };
 
