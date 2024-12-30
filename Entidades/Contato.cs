@@ -5,6 +5,7 @@ public class Contato
     public long Id { get; set; } // ID do contato
     public required string Nome { get; set; } // Nome do contato
     public required string Telefone { get; set; } // Telefone do contato
+    public required string Telefone_Serialized { get; set; } // Telefone do contato
     public required string Sexo { get; set; } // Sexo do contato, com valor padrão 'O' (Outros)
     public bool IsBusiness { get; set; } // Indica se o contato é um negócio
     public string? PushName { get; set; } // Nome de usuário do Push (caso tenha)

@@ -486,12 +486,13 @@
             tabEnviarMsg.Size = new Size(1256, 651);
             tabEnviarMsg.TabIndex = 2;
             tabEnviarMsg.Text = "Enviar Mensagem";
+            tabEnviarMsg.Click += tabEnviarMsg_Click_1;
             // 
             // btConfirmarOpcoesMensagem
             // 
             btConfirmarOpcoesMensagem.Cursor = Cursors.Hand;
             btConfirmarOpcoesMensagem.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            btConfirmarOpcoesMensagem.Location = new Point(1073, 394);
+            btConfirmarOpcoesMensagem.Location = new Point(964, 377);
             btConfirmarOpcoesMensagem.Name = "btConfirmarOpcoesMensagem";
             btConfirmarOpcoesMensagem.Size = new Size(126, 35);
             btConfirmarOpcoesMensagem.TabIndex = 19;
@@ -503,7 +504,7 @@
             // 
             lbQuantidadeContatos.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lbQuantidadeContatos.ForeColor = Color.Green;
-            lbQuantidadeContatos.Location = new Point(863, 569);
+            lbQuantidadeContatos.Location = new Point(757, 569);
             lbQuantidadeContatos.Name = "lbQuantidadeContatos";
             lbQuantidadeContatos.Size = new Size(152, 30);
             lbQuantidadeContatos.TabIndex = 16;
@@ -514,7 +515,7 @@
             // 
             label3.AutoSize = true;
             label3.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label3.Location = new Point(715, 32);
+            label3.Location = new Point(604, 15);
             label3.Name = "label3";
             label3.Size = new Size(484, 25);
             label3.TabIndex = 15;
@@ -525,7 +526,7 @@
             btCancelarOpcoesMensagem.Cursor = Cursors.Hand;
             btCancelarOpcoesMensagem.Enabled = false;
             btCancelarOpcoesMensagem.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            btCancelarOpcoesMensagem.Location = new Point(941, 394);
+            btCancelarOpcoesMensagem.Location = new Point(832, 377);
             btCancelarOpcoesMensagem.Name = "btCancelarOpcoesMensagem";
             btCancelarOpcoesMensagem.Size = new Size(126, 35);
             btCancelarOpcoesMensagem.TabIndex = 20;
@@ -547,9 +548,9 @@
             panelFiltroMensagem.Controls.Add(chkDiasMensagem);
             panelFiltroMensagem.Controls.Add(label4);
             panelFiltroMensagem.Controls.Add(txtDiasMensagem);
-            panelFiltroMensagem.Location = new Point(750, 70);
+            panelFiltroMensagem.Location = new Point(606, 43);
             panelFiltroMensagem.Name = "panelFiltroMensagem";
-            panelFiltroMensagem.Size = new Size(449, 359);
+            panelFiltroMensagem.Size = new Size(484, 369);
             panelFiltroMensagem.TabIndex = 14;
             // 
             // chkBusinessMensagem
@@ -674,7 +675,7 @@
             btnEnviar.FlatStyle = FlatStyle.Popup;
             btnEnviar.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btnEnviar.ForeColor = SystemColors.Window;
-            btnEnviar.Location = new Point(1058, 544);
+            btnEnviar.Location = new Point(952, 544);
             btnEnviar.Name = "btnEnviar";
             btnEnviar.Size = new Size(141, 55);
             btnEnviar.TabIndex = 13;
@@ -686,7 +687,7 @@
             // 
             label6.AutoSize = true;
             label6.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label6.Location = new Point(29, 32);
+            label6.Location = new Point(29, 15);
             label6.Name = "label6";
             label6.Size = new Size(263, 25);
             label6.TabIndex = 11;
@@ -696,7 +697,7 @@
             // 
             label7.AutoSize = true;
             label7.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label7.Location = new Point(710, 544);
+            label7.Location = new Point(604, 544);
             label7.Name = "label7";
             label7.Size = new Size(314, 25);
             label7.TabIndex = 12;
@@ -707,10 +708,10 @@
             txtMensagem.AcceptsTab = true;
             txtMensagem.AutoWordSelection = true;
             txtMensagem.Cursor = Cursors.IBeam;
-            txtMensagem.Location = new Point(29, 70);
+            txtMensagem.Location = new Point(29, 43);
             txtMensagem.Name = "txtMensagem";
             txtMensagem.ScrollBars = RichTextBoxScrollBars.Vertical;
-            txtMensagem.Size = new Size(455, 529);
+            txtMensagem.Size = new Size(455, 435);
             txtMensagem.TabIndex = 9;
             txtMensagem.Text = "";
             // 

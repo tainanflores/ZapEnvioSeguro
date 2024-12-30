@@ -44,6 +44,7 @@
             button1 = new Button();
             label3 = new Label();
             panel1 = new Panel();
+            lbNaoPodeRepetir = new Label();
             panel2.SuspendLayout();
             panel1.SuspendLayout();
             SuspendLayout();
@@ -141,7 +142,7 @@
             btnRepetirEnvio.FlatStyle = FlatStyle.Popup;
             btnRepetirEnvio.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btnRepetirEnvio.ForeColor = SystemColors.Window;
-            btnRepetirEnvio.Location = new Point(528, 572);
+            btnRepetirEnvio.Location = new Point(536, 572);
             btnRepetirEnvio.Name = "btnRepetirEnvio";
             btnRepetirEnvio.Size = new Size(181, 55);
             btnRepetirEnvio.TabIndex = 20;
@@ -156,7 +157,7 @@
             btnEnviarFalhas.FlatStyle = FlatStyle.Popup;
             btnEnviarFalhas.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btnEnviarFalhas.ForeColor = SystemColors.Window;
-            btnEnviarFalhas.Location = new Point(726, 572);
+            btnEnviarFalhas.Location = new Point(734, 572);
             btnEnviarFalhas.Name = "btnEnviarFalhas";
             btnEnviarFalhas.Size = new Size(160, 55);
             btnEnviarFalhas.TabIndex = 21;
@@ -199,6 +200,7 @@
             // button1
             // 
             button1.BackColor = SystemColors.ActiveCaption;
+            button1.Cursor = Cursors.Hand;
             button1.FlatStyle = FlatStyle.Flat;
             button1.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
             button1.Location = new Point(897, 2);
@@ -238,12 +240,25 @@
             panel1.Size = new Size(337, 215);
             panel1.TabIndex = 25;
             // 
+            // lbNaoPodeRepetir
+            // 
+            lbNaoPodeRepetir.AutoSize = true;
+            lbNaoPodeRepetir.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lbNaoPodeRepetir.ForeColor = Color.IndianRed;
+            lbNaoPodeRepetir.Location = new Point(518, 552);
+            lbNaoPodeRepetir.Name = "lbNaoPodeRepetir";
+            lbNaoPodeRepetir.Size = new Size(390, 17);
+            lbNaoPodeRepetir.TabIndex = 26;
+            lbNaoPodeRepetir.Text = "Esse envio teve uma falha inesperada e não pode ser repetido";
+            lbNaoPodeRepetir.Visible = false;
+            // 
             // VerMensagemForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.Info;
             ClientSize = new Size(925, 645);
+            Controls.Add(lbNaoPodeRepetir);
             Controls.Add(panel1);
             Controls.Add(panel2);
             Controls.Add(btnEnviarFalhas);
@@ -280,5 +295,6 @@
         private Button button1;
         private Label label3;
         private Panel panel1;
+        private Label lbNaoPodeRepetir;
     }
 }

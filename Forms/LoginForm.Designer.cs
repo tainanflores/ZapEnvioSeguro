@@ -39,7 +39,7 @@
             label6 = new Label();
             label5 = new Label();
             lbStatusUpdate = new Label();
-            label3 = new Label();
+            lbTituloAtu = new Label();
             progressBarUpdate = new ProgressBar();
             labelVersion = new Label();
             pictureBox1 = new PictureBox();
@@ -121,7 +121,7 @@
             panelUpdate.Controls.Add(label6);
             panelUpdate.Controls.Add(label5);
             panelUpdate.Controls.Add(lbStatusUpdate);
-            panelUpdate.Controls.Add(label3);
+            panelUpdate.Controls.Add(lbTituloAtu);
             panelUpdate.Controls.Add(progressBarUpdate);
             panelUpdate.Location = new Point(12, 166);
             panelUpdate.Name = "panelUpdate";
@@ -133,12 +133,13 @@
             // 
             lbNovaVersaoUpdate.AutoSize = true;
             lbNovaVersaoUpdate.BackColor = Color.Transparent;
+            lbNovaVersaoUpdate.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
             lbNovaVersaoUpdate.ForeColor = SystemColors.ButtonFace;
-            lbNovaVersaoUpdate.Location = new Point(95, 74);
+            lbNovaVersaoUpdate.Location = new Point(95, 70);
             lbNovaVersaoUpdate.Name = "lbNovaVersaoUpdate";
-            lbNovaVersaoUpdate.Size = new Size(31, 15);
+            lbNovaVersaoUpdate.Size = new Size(75, 15);
             lbNovaVersaoUpdate.TabIndex = 6;
-            lbNovaVersaoUpdate.Text = "0.0.2";
+            lbNovaVersaoUpdate.Text = "Verificando...";
             // 
             // lbVersaoAtualUpdate
             // 
@@ -156,7 +157,7 @@
             label6.AutoSize = true;
             label6.BackColor = Color.Transparent;
             label6.ForeColor = SystemColors.ButtonFace;
-            label6.Location = new Point(16, 74);
+            label6.Location = new Point(16, 70);
             label6.Name = "label6";
             label6.Size = new Size(75, 15);
             label6.TabIndex = 4;
@@ -185,18 +186,18 @@
             lbStatusUpdate.TabIndex = 2;
             lbStatusUpdate.TextAlign = ContentAlignment.MiddleCenter;
             // 
-            // label3
+            // lbTituloAtu
             // 
-            label3.BackColor = Color.Transparent;
-            label3.Dock = DockStyle.Top;
-            label3.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label3.ForeColor = SystemColors.ButtonFace;
-            label3.Location = new Point(0, 0);
-            label3.Name = "label3";
-            label3.Size = new Size(310, 32);
-            label3.TabIndex = 1;
-            label3.Text = "Nova atualização encontrada";
-            label3.TextAlign = ContentAlignment.MiddleCenter;
+            lbTituloAtu.BackColor = Color.Transparent;
+            lbTituloAtu.Dock = DockStyle.Top;
+            lbTituloAtu.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lbTituloAtu.ForeColor = SystemColors.ButtonFace;
+            lbTituloAtu.Location = new Point(0, 0);
+            lbTituloAtu.Name = "lbTituloAtu";
+            lbTituloAtu.Size = new Size(310, 32);
+            lbTituloAtu.TabIndex = 1;
+            lbTituloAtu.Text = "Verificando Atualizações...";
+            lbTituloAtu.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // progressBarUpdate
             // 
@@ -342,7 +343,7 @@
         private Label label6;
         private Label label5;
         private Label lbStatusUpdate;
-        private Label label3;
+        private Label lbTituloAtu;
         public ProgressBar progressBarUpdate;
         private Label labelVersion;
         private PictureBox pictureBox1;

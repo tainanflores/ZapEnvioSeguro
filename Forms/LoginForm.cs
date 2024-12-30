@@ -41,6 +41,8 @@ namespace ZapEnvioSeguro.Forms {
 
         private async Task UpdateMyApp()
         {
+            panelUpdate.Invoke((Action)(() => panelUpdate.Visible = true));
+
             GithubSource source = new GithubSource(
                     repoUrl: "https://github.com/tainanflores/ZapEnvioSeguro",
                     accessToken: "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",
@@ -50,11 +52,12 @@ namespace ZapEnvioSeguro.Forms {
 
             var newVersion = await mgr.CheckForUpdatesAsync();
             if (newVersion == null)
+            {
+                panelUpdate.Invoke((Action)(() => panelUpdate.Visible = false));
                 return;
-
-            panelUpdate.Invoke((Action)(() => panelUpdate.Visible = true));
-            panelLogin.Invoke((Action)(() => panelLogin.Enabled = false));
-            panelLogin.Invoke((Action)(() => lbNovaVersaoUpdate.Text = newVersion.TargetFullRelease.ToString()));
+            }
+            panelLogin.Invoke((Action)(() => lbTituloAtu.Text = "Nova Versão Encontrada"));
+            panelLogin.Invoke((Action)(() => lbNovaVersaoUpdate.Text = newVersion.TargetFullRelease.Version.ToString()));
             progressBarUpdate.Invoke((Action)(() => progressBarUpdate.Value = 0));
             lbStatusUpdate.Invoke((Action)(() => lbStatusUpdate.Text = "Baixando nova versão..."));
 

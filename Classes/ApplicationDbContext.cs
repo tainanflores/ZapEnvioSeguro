@@ -31,5 +31,9 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Mensagens>()
             .Property(c => c.QuantidadeContatosSucesso)
             .HasDefaultValue(0);
+
+        modelBuilder.Entity<Mensagens>()
+           .Property(c => c.FalhaInesperada)
+           .HasDefaultValue(true);
     }
 }
