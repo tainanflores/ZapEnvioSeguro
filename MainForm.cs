@@ -34,6 +34,7 @@ namespace ZapEnvioSeguro
         public static bool enviarClicado = false;
         public static bool wppInjetado = false;
         public static bool sincronizarContatos = false;
+        public static bool iniciouSincronizar = false;
         public static bool contatosProntos = false;
         public static bool filtroAtivo = false;
 
@@ -43,11 +44,11 @@ namespace ZapEnvioSeguro
 
         private static string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         private static string ScriptFilePath = Path.Combine(appDataPath, "ZapEnvioSeguro", "wppconnect-wa.js");
-        private static string? mensagemIdEnviando;
+        private static long mensagemIdEnviando;
 
         private static long telefoneIdEnviando;
 
-        private const int timeoutSeconds = 15;
+        private const int timeoutSeconds = 25;
 
         public MainForm()
         {
@@ -64,7 +65,7 @@ namespace ZapEnvioSeguro
             overlayPanel = new Panel
             {
                 Dock = DockStyle.Fill,
-                BackColor = Color.White, 
+                BackColor = Color.White,
                 Parent = this,
                 Visible = true
             };
@@ -102,7 +103,7 @@ namespace ZapEnvioSeguro
         {
             // Carregar os contatos e mensagens de forma assíncrona
             await Task.WhenAll(LoadContacts(), LoadMessages());
-            
+
             HideLoading();
 
         }
@@ -126,6 +127,14 @@ namespace ZapEnvioSeguro
 
             await webView21.EnsureCoreWebView2Async(environment);
             webView21.CoreWebView2.DOMContentLoaded += CoreWebView2_DOMContentLoaded;
+            if (webView21.CoreWebView2 != null)
+            {
+                // Desabilitar os diálogos padrão de JavaScript
+                webView21.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = false;
+                webView21.CoreWebView2.Settings.IsPinchZoomEnabled = false;
+                webView21.CoreWebView2.Settings.IsZoomControlEnabled = false;
+            }
+
             webView21.CoreWebView2.Navigate("https://web.whatsapp.com/");
 
             dataGridViewContatos.VirtualMode = true;
@@ -184,7 +193,7 @@ namespace ZapEnvioSeguro
         {
             if (isSendingMessage)
             {
-                isSendingMessage = false;
+                InjetarScriptWebview("window.chrome.webview.postMessage('mensagemNaoEnviada');");
             }
             SendTimer.Stop();
         }
@@ -531,7 +540,7 @@ namespace ZapEnvioSeguro
         {
 
             var query = $"SELECT " +
-                 $"Id, Nome, Telefone, Sexo, DateLastReceivedMsg, DateLastSentMsg, IsBusiness, PushName, IdEmpresa " +
+                 $"Id, Nome, Telefone, Telefone_Serialized, Sexo, DateLastReceivedMsg, DateLastSentMsg, IsBusiness, PushName, IdEmpresa " +
                  $"FROM " +
                  $"Contatos " +
                  $"WHERE IdEmpresa = @IdEmpresa";
@@ -553,6 +562,7 @@ namespace ZapEnvioSeguro
                         Id = (long)row["Id"],
                         Nome = row["Nome"].ToString(),
                         Telefone = row["Telefone"].ToString(),
+                        Telefone_Serialized = row["Telefone_Serialized"].ToString(),
                         Sexo = row["Sexo"].ToString(),
                         DateLastReceivedMsg = row.IsNull("DateLastReceivedMsg") ? (DateTime?)null : (DateTime)row["DateLastReceivedMsg"],
                         DateLastSentMsg = row.IsNull("DateLastSentMsg") ? (DateTime?)null : (DateTime)row["DateLastSentMsg"],
@@ -614,7 +624,7 @@ namespace ZapEnvioSeguro
                 {
                     var query = contatosList.AsQueryable();
 
-                        if (filtroAtivo)
+                    if (filtroAtivo)
                     {
                         if (chkFiltroSemConversa.Checked)
                         {
@@ -976,6 +986,8 @@ namespace ZapEnvioSeguro
         {
             var content = e.WebMessageAsJson;
 
+            if (iniciouSincronizar) return;
+
             if (content.Contains("iniciouConversa"))
             {
                 await webView21.ExecuteScriptAsync(WhatsAppWebScripts.ScriptUsarWhatsAppWeb);
@@ -984,14 +996,29 @@ namespace ZapEnvioSeguro
 
             if (content.Contains("usarWhatsAppWebClicado"))
             {
-                //await Task.Delay(5000);                
+                while (!wppInjetado)
+                {
+                    await Task.Delay(500);
+                }              
+                
                 await webView21.ExecuteScriptAsync(WhatsAppWebScripts.ScriptEnviarMensagem);
                 return;
             }
 
             if (content.Contains("enviarClicado"))
             {
-                await webView21.ExecuteScriptAsync(WhatsAppWebScripts.ScriptVerificarEnvio);
+                await Task.Delay(1000);
+                //string query = "SELECT Telefone_Serialized FROM Contatos WHERE Id = @Id";
+                //SqlParameter[] sp = new SqlParameter[]
+                //    {
+                //        new SqlParameter("@Id", telefoneIdEnviando),
+                //    };
+
+                //var idZap = await dbHelper.ExecuteScalarAsync(query, sp);
+
+                //string script = WhatsAppWebScripts.MensagemPorContato(idZap.ToString());
+
+                //await webView21.ExecuteScriptAsync(script);
                 return;
             }
 
@@ -999,9 +1026,9 @@ namespace ZapEnvioSeguro
             {
                 try
                 {
-                    SqlParameter[] parameters;
-
-                    parameters = new SqlParameter[]
+                    SendTimer.Stop();
+                    bool enviouSucesso = content.Contains("mensagemEnviada");
+                    SqlParameter[] parameters = new SqlParameter[]
                     {
                         new SqlParameter("@MensagemId", mensagemIdEnviando),
                         new SqlParameter("@TelefoneId", telefoneIdEnviando),
@@ -1009,56 +1036,32 @@ namespace ZapEnvioSeguro
 
                     var existeMsg = await dbHelper.ExecuteScalarAsync("SELECT Id FROM MensagemEnviada WHERE MensagemId = @MensagemId AND TelefoneId = @TelefoneId", parameters);
 
-                    var query = "INSERT INTO MensagemEnviada " +
+                    string query = "INSERT INTO MensagemEnviada " +
                   "(MensagemId, TelefoneId, DataEnvio, IdEmpresa, SucessoEnviada) " +
                   "VALUES (@MensagemId, @TelefoneId, @DataEnvio, @IdEmpresa, @SucessoEnviada);";
 
                     if (existeMsg == null)
                     {
-                        if (content.Contains("mensagemEnviada"))
+                        parameters = new SqlParameter[]
                         {
-                            parameters = new SqlParameter[]
-                            {
-                                new SqlParameter("@MensagemId", mensagemIdEnviando),
-                                new SqlParameter("@TelefoneId", telefoneIdEnviando),
-                                new SqlParameter("@DataEnvio", DateTime.Now.ToString()),
-                                new SqlParameter("@IdEmpresa", Evento.IdEmpresa),
-                                new SqlParameter("@SucessoEnviada", true)
-                            };
-                        }
-                        else
-                        {
-                            parameters = new SqlParameter[]
-                           {
-                                new SqlParameter("@MensagemId", mensagemIdEnviando),
-                                new SqlParameter("@TelefoneId", telefoneIdEnviando),
-                                new SqlParameter("@DataEnvio", DateTime.Now.ToString()),
-                                new SqlParameter("@IdEmpresa", Evento.IdEmpresa),
-                                new SqlParameter("@SucessoEnviada", false)
-                           };
-                        }
+                            new SqlParameter("@MensagemId", mensagemIdEnviando),
+                            new SqlParameter("@TelefoneId", telefoneIdEnviando),
+                            new SqlParameter("@DataEnvio", DateTime.Now.ToString()),
+                            new SqlParameter("@IdEmpresa", Evento.IdEmpresa),
+                            new SqlParameter("@SucessoEnviada", enviouSucesso)
+                        };                        
 
                         var idMsg = await dbHelper.InsertDataAsync(query, parameters);
                     }
                     else
                     {
                         query = "UPDATE MensagemEnviada SET SucessoEnviada = @SucessoEnviada WHERE Id = @Id";
-                        if (content.Contains("mensagemEnviada"))
+                       
+                        parameters = new SqlParameter[]
                         {
-                            parameters = new SqlParameter[]
-                            {
-                                new SqlParameter("@Id",existeMsg),
-                                new SqlParameter("@SucessoEnviada", true)
-                            };
-                        }
-                        else
-                        {
-                            parameters = new SqlParameter[]
-                            {
-                                new SqlParameter("@Id",existeMsg),
-                                new SqlParameter("@SucessoEnviada", false)
-                            };
-                        }
+                            new SqlParameter("@Id",existeMsg),
+                            new SqlParameter("@SucessoEnviada", enviouSucesso)
+                        };                       
 
                         await dbHelper.ExecuteNonQueryAsync(query, parameters);
                     }
@@ -1073,7 +1076,7 @@ namespace ZapEnvioSeguro
                       };
 
                     await dbHelper.ExecuteNonQueryAsync(query, parameters);
-
+                    await Task.Delay(1000);
                     SetSendingMessageState(false);
                     iniciouConversa = false;
 
@@ -1098,7 +1101,6 @@ namespace ZapEnvioSeguro
                 InjetarScriptWebview(WhatsAppWebScripts.contatosComData);
                 InjetarScriptWebview(WhatsAppWebScripts.apiMessageHandler);
                 wppInjetado = true;
-
                 return;
             }
 
@@ -1131,6 +1133,7 @@ namespace ZapEnvioSeguro
 
             if (sincronizarContatos)
             {
+                iniciouSincronizar = true;
                 ProgressForm progressForm = new ProgressForm();
                 progressForm.CenterToParentForm(this);
                 progressForm.SetMin(0);
@@ -1150,7 +1153,7 @@ namespace ZapEnvioSeguro
                 this.Enabled = true;
 
                 progressForm.Close();
-
+                iniciouSincronizar = false;
                 InjetarScriptWebview("obterMensagensFiltradas();");
                 return;
 
@@ -1184,31 +1187,51 @@ namespace ZapEnvioSeguro
                 }
 
                 return;
-            }
-
-            //if (isSendingMessage)
-            //{
-            //    var response = JsonConvert.DeserializeObject<WhatsAppMessage>(content);
-
-            //    if (response.Id.FromMe)
-            //    {
-            //        //var telefone = TelefoneFormatado(response.To.ToString());
-            //        //var msg = response.Body.ToString();
-            //        MessageBox.Show("mensagem enviada");
-            //    }
-
-            //    Console.WriteLine(response);
-            //}
+            }            
 
             if (content.StartsWith("{\"id\":{\"fromMe"))
             {
                 try
                 {
-                    
                     var response = JsonConvert.DeserializeObject<WhatsAppMessage>(content);
                     if (!response.From.EndsWith("@c.us"))
                     {
                         return;
+                    }
+
+                    if (response.Id.FromMe)
+                    {
+                        if(isSendingMessage)
+                        {
+                            string telefoneEnviando = response.To;
+                            string msg = response.Body;
+
+
+                            string query = "SELECT Telefone_Serialized FROM Contatos WHERE Id = @Id";
+                            SqlParameter[] sp = [ new SqlParameter("@Id", telefoneIdEnviando) ];
+
+                            var idZap = await dbHelper.ExecuteScalarAsync(query, sp);
+
+                            if (idZap.ToString() == telefoneEnviando)
+                            {
+                                SqlParameter[] parameters;
+                                query = "SELECT Mensagem FROM Mensagens WHERE Id = @Id";
+                                sp = [ new SqlParameter("@Id", mensagemIdEnviando) ];
+
+                                var textoMsgEnviando = await dbHelper.ExecuteScalarAsync(query, sp);
+
+                                bool enviouSucesso = true;
+
+                                //msg = msg.Replace("\\n", "\n");
+                                string compararmsg = textoMsgEnviando.ToString();
+
+                                if (string.Equals(msg, compararmsg, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    await webView21.ExecuteScriptAsync("window.chrome.webview.postMessage('mensagemEnviada')");
+                                }
+
+                            }
+                        }
                     }
                     var contatosComDataList = new List<ContatoComData>();
 
@@ -1217,7 +1240,7 @@ namespace ZapEnvioSeguro
                         var contatoComData = new ContatoComData
                         {
                             Telefone = response.From, // O campo "From" contém o telefone
-                            DateLastReceivedMsg = DateTimeOffset.FromUnixTimeSeconds(response.T).DateTime
+                            DateLastReceivedMsg = DateTimeOffset.FromUnixTimeSeconds(response.T).DateTime.AddHours(-3)
                         };
 
                         contatosComDataList.Add(contatoComData);
@@ -1262,10 +1285,17 @@ namespace ZapEnvioSeguro
                 //int total = contatoList.Count;
                 //int current = 0;
 
-                var queries = new List<Tuple<string, SqlParameter[]>>();
+                //var queries = new List<Tuple<string, SqlParameter[]>>();
+                int total = contatoList.Count;
+                int batchSize = 500;  // Tamanho do lote
+                int totalBatches = (int)Math.Ceiling((double)total / batchSize);  // Total de lotes a serem processados
+                var batchQueries = new List<Tuple<string, SqlParameter[]>>();
 
-                foreach (var contato in contatoList)
+                int currentBatch = 0;  // Contador de lotes processados
+
+                for (int i = 0; i < total; i++)
                 {
+                    var contato = contatoList[i];
                     // Verificar se o contato já existe na lista carregada do banco
                     var contatoExistente = contatosExistentesDataTable.Rows.Cast<DataRow>()
                         .FirstOrDefault(row => row["Telefone"].ToString() == contato.Telefone);
@@ -1293,11 +1323,12 @@ namespace ZapEnvioSeguro
                     else
                     {
                         // Inserir o novo contato
-                        query = "INSERT INTO Contatos (Telefone, Nome, PushName, IsBusiness, IdEmpresa) " +
-                                "VALUES (@Telefone, @Nome, @PushName, @IsBusiness, @IdEmpresa);";
+                        query = "INSERT INTO Contatos (Telefone, Telefone_Serialized, Nome, PushName, IsBusiness, IdEmpresa) " +
+                                "VALUES (@Telefone, @Telefone_Serialized, @Nome, @PushName, @IsBusiness, @IdEmpresa);";
                         parameters = new SqlParameter[]
                         {
                             new SqlParameter("@Telefone", contato.Telefone),
+                            new SqlParameter("@Telefone_Serialized", contato.Telefone_Serialized),
                             new SqlParameter("@Nome", contato.Nome ?? contato.PushName),
                             new SqlParameter("@PushName", contato.PushName ?? contato.Nome),
                             new SqlParameter("@IsBusiness", contato.IsBusiness),
@@ -1305,19 +1336,25 @@ namespace ZapEnvioSeguro
                          };
                     }
 
-                    queries.Add(Tuple.Create(query, parameters));
+                    batchQueries.Add(Tuple.Create(query, parameters));
 
-                    //current++;
-                    //int percent = (int)((double)current / total * 100);
-                    //// Reportar o progresso
-                    //progress?.Report(new ProgressReport { Percent = percent, Message = $"Importando contato {current} de {total}" });
-                }
+                    if (batchQueries.Count >= batchSize || i == total - 1)
+                    {
+                        currentBatch++;
 
-                await dbHelper.ExecuteTransactionAsync(queries, progress);
+                        // Executar o lote
+                        await dbHelper.ExecuteTransactionAsync(batchQueries, progress, $"Lote {currentBatch} de {totalBatches}");
+
+                        // Limpar as queries para o próximo lote
+                        batchQueries.Clear();
+
+                    }
+
+                }                
 
                 lbNovosContatos.Visible = false;
                 lbCliqueImportar.Visible = false;
-                lbAnalisandoContatos.Visible = true;
+                lbAnalisandoContatos.Visible = false;
                 btnSincronizarContatos.Enabled = false;
                 return;
 
@@ -1333,62 +1370,26 @@ namespace ZapEnvioSeguro
         {
             try
             {
-                string query = "UPDATE Contatos SET DateLastReceivedMsg = @DateLastReceivedMsg WHERE Telefone = @Telefone AND IdEmpresa = @IdEmpresa";
-                // Carregar todos os contatos do banco para memória
-                var queryTodos = "SELECT Telefone, Nome, PushName, IsBusiness, Id FROM Contatos WHERE IdEmpresa = @IdEmpresa";
-                SqlParameter[] parametersId = new SqlParameter[]
-                {
-                    new SqlParameter("@IdEmpresa", Evento.IdEmpresa)
-                };
-
-                var contatosExistentesDataTable = await dbHelper.ExecuteQueryAsync(queryTodos, parametersId);
-
-                if (contatosExistentesDataTable == null)
-                {
-                    MessageBox.Show("Erro ao carregar contatos existentes.");
-                    return;
-                }
+                string query = "UPDATE Contatos SET DateLastReceivedMsg = @DateLastReceivedMsg WHERE Telefone_Serialized = @Telefone_Serialized AND IdEmpresa = @IdEmpresa";                
 
                 SqlParameter[] parameters;
-
-                //int total = contatosExistentesDataTable.Rows.Count;
-                //int current = 0;
-
                 var queries = new List<Tuple<string, SqlParameter[]>>();
 
                 foreach (var contato in contatosComData)
-                {
-                    var telefoneFormatado = TelefoneFormatado(contato.Telefone);
-
-                    // Verificar se o contato já existe na lista carregada do banco
-                    var contatoExistente = contatosExistentesDataTable.Rows.Cast<DataRow>()
-                        .FirstOrDefault(row => row["Telefone"].ToString() == telefoneFormatado);
-
-                    if (contatoExistente != null)
+                {                    
+                    parameters = new SqlParameter[]
                     {
-                        parameters = new SqlParameter[]
-                        {
-                        new SqlParameter("@DateLastReceivedMsg", contato.DateLastReceivedMsg),
-                        new SqlParameter("@Telefone", telefoneFormatado),
-                        new SqlParameter("@IdEmpresa", Evento.IdEmpresa)
-                        };
-                    }
-                    else
-                    {
-                        continue;
-                    }
+                    new SqlParameter("@DateLastReceivedMsg", contato.DateLastReceivedMsg),
+                    new SqlParameter("@Telefone_Serialized", contato.Telefone),
+                    new SqlParameter("@IdEmpresa", Evento.IdEmpresa)
+                    };                   
 
-                    queries.Add(Tuple.Create(query, parameters));
-
-                    //await dbHelper.ExecuteNonQueryAsync(query, parameters);
-                    //current++;
-                    //int percent = (int)((double)current / total * 100);
-                    //progress?.Report(new ProgressReport { Percent = percent, Message = $"Importando data da última mensagem: {current} de {total}" });
+                    queries.Add(Tuple.Create(query, parameters));                    
                 }
 
                 await dbHelper.ExecuteTransactionAsync(queries, progress);
 
-                LoadContacts();
+                await LoadContacts();
             }
             catch (Exception ex)
             {
@@ -1397,7 +1398,7 @@ namespace ZapEnvioSeguro
 
         }
 
-        public async Task ProcessarMensagem(string json)
+        public void ProcessarMensagem(string json)
         {
             WhatsAppMessage message = Parametros.NovaMensagem(json)[0];
 
@@ -1464,6 +1465,7 @@ namespace ZapEnvioSeguro
                     Id = 0, // ID será gerado pelo banco de dados ou outra lógica
                     Nome = contact.name ?? contact.pushname ?? "Desconhecido", // Se o nome não estiver presente, usa o pushname ou "Desconhecido"
                     Telefone = telefone,
+                    Telefone_Serialized = contact.id,
                     Sexo = "O", // Sexo padrão como "Outros"
                     IsBusiness = contact.isBusiness,
                     PushName = contact.pushname,
@@ -1549,7 +1551,7 @@ namespace ZapEnvioSeguro
             }
         }
 
-        private async void btnSincronizarContatos_Click(object sender, EventArgs e)
+        private void btnSincronizarContatos_Click(object sender, EventArgs e)
         {
             var result = MessageBox.Show(
                 "Deseja sincronizar os contatos do WhatsApp e salvar a data da última mensagem recebida de cada contato?",
@@ -1578,6 +1580,12 @@ namespace ZapEnvioSeguro
                 if (string.IsNullOrEmpty(mensagem))
                 {
                     MessageBox.Show("Por favor, escreva a mensagem antes de enviar.", "Campos Vazios", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    btnEnviar.Enabled = true;
+                    return;
+                }
+                if (contatosSelecionadosParaEnvio.Count() == 0)
+                {
+                    MessageBox.Show("Por favor, selecione ou filtre os contatos antes de enviar.", "Campos Vazios", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     btnEnviar.Enabled = true;
                     return;
                 }
@@ -1617,7 +1625,7 @@ namespace ZapEnvioSeguro
 
                 var idMensagem = await dbHelper.ExecuteScalarAsync(query, parameters);
 
-                mensagemIdEnviando = idMensagem.ToString();
+                mensagemIdEnviando = Convert.ToInt64(idMensagem);
 
                 progressForm.CenterToParentForm(this);
                 progressForm.SetMin(0);
@@ -1635,9 +1643,13 @@ namespace ZapEnvioSeguro
 
                 int total = contatosSelecionadosParaEnvio.Count();
                 int current = 0;
+#if DEBUG
+                //tabControl1.SelectTab(0);
+#endif
 
                 foreach (var contato in contatosSelecionadosParaEnvio)
                 {
+                    current++;
                     //tabControl1.SelectTab(0);
                     telefoneIdEnviando = contato.Id;
                     int percent = (int)((double)current / total * 100);
@@ -1645,10 +1657,29 @@ namespace ZapEnvioSeguro
 
                     SendTimer.Start();
 
-                    await EnviarMensagemSegura(contato.Telefone, mensagem);
-                    current++;
+                    await EnviarMensagemZap(contato.Telefone, mensagem);
 
                     SendTimer.Stop();
+
+                    query = "SELECT COUNT(*) FROM MensagemEnviada WHERE MensagemId = @MensagemId AND SucessoEnviada = 1";
+
+                    parameters = new SqlParameter[]
+                    {
+                    new SqlParameter("@MensagemId", idMensagem)
+                    };
+
+                    var enviadas = await dbHelper.ExecuteScalarAsync(query, parameters);
+
+                    query = "UPDATE Mensagens SET QuantidadeContatosSucesso = @QuantidadeContatosSucesso WHERE Id = @Id";
+
+                    parameters = new SqlParameter[]
+                    {
+                    new SqlParameter("@QuantidadeContatosSucesso", Convert.ToInt64(enviadas)),
+                    new SqlParameter("@Id", idMensagem),
+                    };
+
+                    await dbHelper.ExecuteNonQueryAsync(query, parameters);
+
                 }
 
                 query = "SELECT COUNT(*) FROM MensagemEnviada WHERE MensagemId = @MensagemId AND SucessoEnviada = 1";
@@ -1662,12 +1693,13 @@ namespace ZapEnvioSeguro
 
                 int qtdFalha = Convert.ToInt32(total) - Convert.ToInt32(sucesso);
 
-                query = "UPDATE Mensagens SET QuantidadeContatosSucesso = @QuantidadeContatosSucesso WHERE Id = @Id";
+                query = "UPDATE Mensagens SET QuantidadeContatosSucesso = @QuantidadeContatosSucesso, FalhaInesperada = @FalhaInesperada WHERE Id = @Id";
 
                 parameters = new SqlParameter[]
                 {
                     new SqlParameter("@QuantidadeContatosSucesso", Convert.ToInt64(sucesso)),
-                    new SqlParameter("@Id", idMensagem)
+                    new SqlParameter("@Id", idMensagem),
+                    new SqlParameter("@FalhaInesperada", false)
                 };
 
                 await dbHelper.ExecuteNonQueryAsync(query, parameters);
@@ -1682,12 +1714,17 @@ namespace ZapEnvioSeguro
 
                 this.Enabled = true;
                 btnEnviar.Enabled = true;
+                panelFiltroMensagem.Enabled = true;
+                lbQuantidadeContatos.Text = "0 Contatos";
                 txtMensagem.Clear();
                 txtBusca.Clear();
                 contatosSelecionadosParaEnvio.Clear();
                 LimparPanelFiltros();
-                LoadContacts();
-                LoadMessages();
+                tabControl1.SelectTab(0);
+                await Task.Delay(1000);
+                SendKeys.Send("{ESC}");
+                await LoadContacts();
+                await LoadMessages();
 
             }
             catch (Exception ex)
@@ -1721,6 +1758,7 @@ namespace ZapEnvioSeguro
                 }
 
                 string query;
+                int total = contatosEnviar.Count();
                 SqlParameter[] parameters;
 
                 if (mensagemId == 0)
@@ -1739,11 +1777,18 @@ namespace ZapEnvioSeguro
                     };
 
                     var idMensagem = await dbHelper.ExecuteScalarAsync(query, parameters);
-                    mensagemIdEnviando = idMensagem.ToString();                     
+                    mensagemIdEnviando = Convert.ToInt64(idMensagem);
                 }
                 else
                 {
-                    mensagemIdEnviando = mensagemId.ToString();//idMensagem.ToString();
+                    mensagemIdEnviando = Convert.ToInt64(mensagemId);//idMensagem.ToString();
+                    //query = "SELECT COUNT(*) FROM MensagemEnviada WHERE MensagemId = @MensagemId";
+
+                    //parameters = new SqlParameter[]
+                    //{
+                    //new SqlParameter("@MensagemId", mensagemIdEnviando)
+                    //};
+                    //total = Convert.ToInt32(await dbHelper.ExecuteScalarAsync(query, parameters));
                 }
 
                 progressForm.CenterToParentForm(this);
@@ -1760,40 +1805,61 @@ namespace ZapEnvioSeguro
 
                 IProgress<ProgressReport> progress = progressReport;
 
-                int total = contatosEnviar.Count();
                 int current = 0;
 
                 foreach (var contato in contatosEnviar)
                 {
+                    current++;
                     //tabControl1.SelectTab(0);
                     telefoneIdEnviando = contato.Id;
                     int percent = (int)((double)current / total * 100);
                     progress?.Report(new ProgressReport { Percent = percent, Message = $"{current} de {total}" });
 
                     SendTimer.Start();
-
-                    await EnviarMensagemSegura(contato.Telefone, mensagem);
-                    current++;
+                    await EnviarMensagemZap(contato.Telefone, mensagem);
                     SendTimer.Stop();
+
+                    query = "SELECT COUNT(*) FROM MensagemEnviada WHERE MensagemId = @MensagemId AND SucessoEnviada = 1";
+
+                    parameters = new SqlParameter[]
+                    {
+                    new SqlParameter("@MensagemId", mensagemIdEnviando)
+                    };
+
+                    var enviadas = await dbHelper.ExecuteScalarAsync(query, parameters);
+
+                    query = "UPDATE Mensagens SET QuantidadeContatosSucesso = @QuantidadeContatosSucesso WHERE Id = @Id";
+
+                    parameters = new SqlParameter[]
+                    {
+                    new SqlParameter("@QuantidadeContatosSucesso", Convert.ToInt64(enviadas)),
+                    new SqlParameter("@Id", mensagemIdEnviando),
+                    };
+
+                    await dbHelper.ExecuteNonQueryAsync(query, parameters);
+
                 }
+
+                await Task.Delay(3000);
 
                 query = "SELECT COUNT(*) FROM MensagemEnviada WHERE MensagemId = @MensagemId AND SucessoEnviada = 1";
 
                 parameters = new SqlParameter[]
                 {
-                    new SqlParameter("@MensagemId", mensagemId)
+                    new SqlParameter("@MensagemId", mensagemIdEnviando)
                 };
 
                 var sucesso = await dbHelper.ExecuteScalarAsync(query, parameters);
 
                 int qtdFalha = Convert.ToInt32(total) - Convert.ToInt32(sucesso);
 
-                query = "UPDATE Mensagens SET QuantidadeContatosSucesso = @QuantidadeContatosSucesso WHERE Id = @Id";
+                query = "UPDATE Mensagens SET QuantidadeContatosSucesso = @QuantidadeContatosSucesso, FalhaInesperada = @FalhaInesperada WHERE Id = @Id";
 
                 parameters = new SqlParameter[]
                 {
                     new SqlParameter("@QuantidadeContatosSucesso", Convert.ToInt64(sucesso)),
-                    new SqlParameter("@Id", mensagemId)
+                    new SqlParameter("@Id", mensagemIdEnviando),
+                    new SqlParameter("@FalhaInesperada", false)
                 };
 
                 await dbHelper.ExecuteNonQueryAsync(query, parameters);
@@ -1811,8 +1877,11 @@ namespace ZapEnvioSeguro
                 txtMensagem.Clear();
                 txtBusca.Clear();
                 contatosEnviar.Clear();
-                LoadContacts();
-                LoadMessages();
+                tabControl1.SelectTab(0);
+                await Task.Delay(1000);
+                SendKeys.Send("{ESC}");
+                await LoadContacts();
+                await LoadMessages();
             }
             catch (Exception ex)
             {
@@ -1844,7 +1913,7 @@ namespace ZapEnvioSeguro
             }
         }
 
-        private async Task EnviarMensagemSegura(string telefone, string mensagem)
+        private async Task EnviarMensagemZap(string telefone, string mensagem)
         {
             if (string.IsNullOrEmpty(telefone) || string.IsNullOrEmpty(mensagem))
             {
@@ -1859,7 +1928,7 @@ namespace ZapEnvioSeguro
             string url = $"https://wa.me/{telefoneFormatado}?text={Uri.EscapeDataString(mensagem)}";
 
             SetSendingMessageState(true);
-            InjetarScriptWebview("window.onbeforeunload = null;");
+            //InjetarScriptWebview("window.onbeforeunload = null;");
             webView21.CoreWebView2.Navigate(url);
 
             while (isSendingMessage)
@@ -2245,5 +2314,15 @@ namespace ZapEnvioSeguro
         }
 
         #endregion
+
+        private void tabEnviarMsg_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void tabEnviarMsg_Click_1(object sender, EventArgs e)
+        {
+
+        }
     }
 }

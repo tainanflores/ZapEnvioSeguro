@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
 using ZapEnvioSeguro.Classes;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
@@ -39,6 +40,13 @@ namespace ZapEnvioSeguro.Forms
                     lbEnvioSolicitado.Text = row["QuantidadeContatosSolicitados"].ToString();
                     lbEnviosSucesso.Text = row["QuantidadeContatosSucesso"].ToString();
                     lbEnvioFalha.Text = (Int32.Parse(row["QuantidadeContatosSolicitados"].ToString()) - Int32.Parse(row["QuantidadeContatosSucesso"].ToString())).ToString();
+
+                    if (row["FalhaInesperada"].ToString() == "True")
+                    {
+                        lbNaoPodeRepetir.Visible = true;
+                        btnEnviarFalhas.Enabled = false;
+                        btnRepetirEnvio.Enabled = false;
+                    }
                 }
                 else
                 {
@@ -75,6 +83,9 @@ namespace ZapEnvioSeguro.Forms
                 return;
             }
             this.Enabled = false;
+#if DEBUG
+            //mainForm.tabControl1.SelectTab(0);
+#endif
 
             List<Contato> contatosList = new List<Contato>();
             string mensagem = txtMensagem.Text;
@@ -97,6 +108,7 @@ namespace ZapEnvioSeguro.Forms
                     Id = (long)row["Id"],
                     Nome = row["Nome"].ToString(),
                     Telefone = row["Telefone"].ToString(),
+                    Telefone_Serialized = row["Telefone_Serialized"].ToString(),
                     Sexo = row["Sexo"].ToString(),
                     DateLastReceivedMsg = row.IsNull("DateLastReceivedMsg") ? (DateTime?)null : (DateTime)row["DateLastReceivedMsg"],
                     DateLastSentMsg = row.IsNull("DateLastSentMsg") ? (DateTime?)null : (DateTime)row["DateLastSentMsg"],
@@ -161,6 +173,7 @@ namespace ZapEnvioSeguro.Forms
                     Id = (long)row["Id"],
                     Nome = row["Nome"].ToString(),
                     Telefone = row["Telefone"].ToString(),
+                    Telefone_Serialized = row["Telefone_Serialized"].ToString(),
                     Sexo = row["Sexo"].ToString(),
                     DateLastReceivedMsg = row.IsNull("DateLastReceivedMsg") ? (DateTime?)null : (DateTime)row["DateLastReceivedMsg"],
                     DateLastSentMsg = row.IsNull("DateLastSentMsg") ? (DateTime?)null : (DateTime)row["DateLastSentMsg"],
@@ -172,9 +185,8 @@ namespace ZapEnvioSeguro.Forms
             }
 
             await mainForm.EnviarMensagemSegura(contatosList, mensagem, messageId);
-            this.Refresh();
             this.Enabled = true;
-
+            this.Close();
         }
     }
 }

@@ -160,14 +160,22 @@ namespace ZapEnvioSeguro.Classes
         "
         ;
 
-        public static string mensagemPorContato = @"
-            async function messageList(idZap){
-                var messages = await WPP.chat.getMessages(idZap, {count: 10});
-                var msgJson = JSON.stringify(messages);
-                window.chrome.webview.postMessage(msgJson);
-            }";
-        
-
+        public static string MensagemPorContato(string idZap) {
+            return "async function messageList(){" +
+                        $"var mensagens = await WPP.chat.getMessages('{idZap}', " + "{count: 5});" +
+                          @"if (mensagens && mensagens.length > 0){
+                              const ultimaMensagem = mensagens.reverse().find(msg => msg.__x_id.fromMe);
+                              if (ultimaMensagem)
+                              {     
+                                var body = ultimaMensagem.body;
+                                window.chrome.webview.postMessage(`ultimaMensagem:${body}`);                                  
+                              }
+                            }
+                    }
+                    messageList();
+";
+                    
+        }
 
         public static string apiMessageHandler = @"
             WPP.on('chat.new_message', (msg) => {

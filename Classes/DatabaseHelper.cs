@@ -165,7 +165,7 @@ namespace ZapEnvioSeguro.Classes
         }
 
         // Método para executar uma transação com múltiplas operações
-        public async Task<bool> ExecuteTransactionAsync(List<Tuple<string, SqlParameter[]>> queries, IProgress<ProgressReport> progress = null)
+        public async Task<bool> ExecuteTransactionAsync(List<Tuple<string, SqlParameter[]>> queries, IProgress<ProgressReport> progress = null, string loteDeLotes = "")
         {
             SqlTransaction transaction = null;
 
@@ -186,6 +186,7 @@ namespace ZapEnvioSeguro.Classes
 
                         using (var command = new SqlCommand(query, connection, transaction))
                         {
+                            command.CommandTimeout = 60;
                             // Adicionar parâmetros à consulta
                             if (parameters != null)
                             {
@@ -199,7 +200,7 @@ namespace ZapEnvioSeguro.Classes
                         current++;
                         int percent = (int)((double)current / total * 100);
                         // Reportar o progresso
-                        progress?.Report(new ProgressReport { Percent = percent, Message = $"{current} de {total}" });
+                        progress?.Report(new ProgressReport { Percent = percent, Message = $"{current} de {total} - {loteDeLotes}" });
                     }
 
                     // Se todas as consultas forem executadas com sucesso, comita a transação

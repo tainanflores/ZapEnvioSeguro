@@ -100,10 +100,8 @@
             FormBorderStyle = FormBorderStyle.None;
             Name = "ProgressForm";
             ShowIcon = false;
-            ShowInTaskbar = false;
-            StartPosition = FormStartPosition.Manual;
+            StartPosition = FormStartPosition.CenterParent;
             Text = "ProgressForm";
-            TopMost = true;
             flowLayoutPanel1.ResumeLayout(false);
             ResumeLayout(false);
         }

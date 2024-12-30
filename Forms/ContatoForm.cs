@@ -18,6 +18,13 @@ namespace ZapEnvioSeguro.Forms
             contatoId = id;
             dbHelper = new DatabaseHelper();
 
+            
+        }
+
+        private void ContatoForm_Load(object sender, EventArgs e)
+        {
+            txtTelefone.MaxLength = 15;
+            this.Enabled = false;
             if (contatoId == 0)
             {
                 lblTitulo.Text = "Adicionar Novo Contato";
@@ -28,11 +35,7 @@ namespace ZapEnvioSeguro.Forms
                 CarregarDadosContato();
                 lblTitulo.Text = "Editar Contato";
             }
-        }
-
-        private void ContatoForm_Load(object sender, EventArgs e)
-        {
-            txtTelefone.MaxLength = 15;
+            this.Enabled = true;
         }
 
         private async void CarregarDadosContato()
