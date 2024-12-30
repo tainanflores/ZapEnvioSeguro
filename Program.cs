@@ -52,28 +52,68 @@ namespace ZapEnvioSeguro
                 Application.Exit();
             }
         }
+        //static DateTime ObterDataOnline()
+        //{
+        //    try
+        //    {
+        //        using (HttpClient client = new HttpClient())
+        //        {
+        //            string url = "http://worldtimeapi.org/api/timezone/Etc/UTC";
+        //            var resposta = client.GetStringAsync(url).Result;
+
+        //            var json = JObject.Parse(resposta);
+        //            string dataHoraStr = json["datetime"].ToString();
+
+        //            DateTime dataHora = DateTime.Parse(dataHoraStr);
+        //            return dataHora;
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show("Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente","Falha ao conectar",MessageBoxButtons.OK,MessageBoxIcon.Error);
+        //        return new DateTime(2001, 1, 1, 0, 0, 0);
+        //    }
+        //}
+
         static DateTime ObterDataOnline()
         {
-            try
+            const int maxTentativas = 5; // Número máximo de tentativas
+            const string url = "http://worldtimeapi.org/api/timezone/Etc/UTC";
+
+            for (int tentativa = 1; tentativa <= maxTentativas; tentativa++)
             {
-                using (HttpClient client = new HttpClient())
+                try
                 {
-                    string url = "http://worldtimeapi.org/api/timezone/Etc/UTC";
-                    var resposta = client.GetStringAsync(url).Result;
+                    using (HttpClient client = new HttpClient())
+                    {
+                        var resposta = client.GetStringAsync(url).Result;
 
-                    var json = JObject.Parse(resposta);
-                    string dataHoraStr = json["datetime"].ToString();
+                        var json = JObject.Parse(resposta);
+                        string dataHoraStr = json["datetime"].ToString();
 
-                    DateTime dataHora = DateTime.Parse(dataHoraStr);
-                    return dataHora;
+                        DateTime dataHora = DateTime.Parse(dataHoraStr);
+                        return dataHora; // Retorna a data/hora se bem-sucedido
+                    }
+                }
+                catch
+                {
+                    if (tentativa == maxTentativas)
+                    {
+                        // Exibe erro apenas na última tentativa
+                        MessageBox.Show(
+                            "Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente.",
+                            "Falha ao conectar",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error
+                        );
+                    }
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Não foi possível conectar ao servidor. Verifique sua conexão com a internet e tente novamente","Falha ao conectar",MessageBoxButtons.OK,MessageBoxIcon.Error);
-                return new DateTime(2001, 1, 1, 0, 0, 0);
-            }
+
+            // Retorna a data padrão se todas as tentativas falharem
+            return new DateTime(2001, 1, 1, 0, 0, 0);
         }
+
 
         static bool EstaoAproximadas(DateTime data1, DateTime data2, int toleranciaEmMinutos)
         {
