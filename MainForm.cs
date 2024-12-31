@@ -1407,7 +1407,7 @@ namespace ZapEnvioSeguro
                             new SqlParameter("@Telefone", contato.Telefone),
                             new SqlParameter("@IdEmpresa", Evento.IdEmpresa),
                             new SqlParameter("@Nome", contato.Nome ?? contato.PushName),
-                            new SqlParameter("@PushName", contato.PushName ?? contato.Nome),
+                            new SqlParameter("@PushName", contato.PushName ?? ""),
                             new SqlParameter("@IsBusiness", contato.IsBusiness)
                         };
                     }
@@ -1421,7 +1421,7 @@ namespace ZapEnvioSeguro
                             new SqlParameter("@Telefone", contato.Telefone),
                             new SqlParameter("@Telefone_Serialized", contato.Telefone_Serialized),
                             new SqlParameter("@Nome", contato.Nome ?? contato.PushName),
-                            new SqlParameter("@PushName", contato.PushName ?? contato.Nome),
+                            new SqlParameter("@PushName", contato.PushName ?? ""),
                             new SqlParameter("@IsBusiness", contato.IsBusiness),
                             new SqlParameter("@IdEmpresa", Evento.IdEmpresa),
                             new SqlParameter("@TelefoneOrigem", Evento.TelefoneOrigem)
@@ -1580,7 +1580,7 @@ namespace ZapEnvioSeguro
                 var contato = new Contato
                 {
                     Id = 0, // ID será gerado pelo banco de dados ou outra lógica
-                    Nome = contact.name ?? contact.pushname ?? "Desconhecido", // Se o nome não estiver presente, usa o pushname ou "Desconhecido"
+                    Nome = contact.name ?? contact.pushname ?? " ", // Se o nome não estiver presente, usa o pushname ou "Desconhecido"
                     Telefone = telefone,
                     Telefone_Serialized = contact.id,
                     Sexo = "O", // Sexo padrão como "Outros"
