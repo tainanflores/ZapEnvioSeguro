@@ -82,7 +82,6 @@
             btnEnviar = new Button();
             label6 = new Label();
             label7 = new Label();
-            txtMensagem = new RichTextBox();
             tabMsgEnviada = new TabPage();
             label8 = new Label();
             panel3 = new Panel();
@@ -91,6 +90,7 @@
             label14 = new Label();
             txtBuscaMsg = new TextBox();
             sqlCommand1 = new Microsoft.Data.SqlClient.SqlCommand();
+            txtMensagem = new TextBox();
             tabControl1.SuspendLayout();
             tabWhatsApp.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)webView21).BeginInit();
@@ -520,6 +520,7 @@
             // 
             // tabEnviarMsg
             // 
+            tabEnviarMsg.Controls.Add(txtMensagem);
             tabEnviarMsg.Controls.Add(chkUsarNomeSalvo);
             tabEnviarMsg.Controls.Add(label10);
             tabEnviarMsg.Controls.Add(btnVarNome);
@@ -531,7 +532,6 @@
             tabEnviarMsg.Controls.Add(btnEnviar);
             tabEnviarMsg.Controls.Add(label6);
             tabEnviarMsg.Controls.Add(label7);
-            tabEnviarMsg.Controls.Add(txtMensagem);
             tabEnviarMsg.Location = new Point(4, 26);
             tabEnviarMsg.Name = "tabEnviarMsg";
             tabEnviarMsg.Size = new Size(1256, 651);
@@ -787,18 +787,6 @@
             label7.TabIndex = 12;
             label7.Text = "Essa mensagem será enviada para:";
             // 
-            // txtMensagem
-            // 
-            txtMensagem.AcceptsTab = true;
-            txtMensagem.AutoWordSelection = true;
-            txtMensagem.Cursor = Cursors.IBeam;
-            txtMensagem.Location = new Point(29, 43);
-            txtMensagem.Name = "txtMensagem";
-            txtMensagem.ScrollBars = RichTextBoxScrollBars.Vertical;
-            txtMensagem.Size = new Size(455, 435);
-            txtMensagem.TabIndex = 9;
-            txtMensagem.Text = "";
-            // 
             // tabMsgEnviada
             // 
             tabMsgEnviada.Controls.Add(label8);
@@ -892,6 +880,18 @@
             sqlCommand1.CommandTimeout = 30;
             sqlCommand1.EnableOptimizedParameterBinding = false;
             // 
+            // txtMensagem
+            // 
+            txtMensagem.AcceptsReturn = true;
+            txtMensagem.AcceptsTab = true;
+            txtMensagem.Cursor = Cursors.IBeam;
+            txtMensagem.Location = new Point(29, 43);
+            txtMensagem.Multiline = true;
+            txtMensagem.Name = "txtMensagem";
+            txtMensagem.ScrollBars = ScrollBars.Vertical;
+            txtMensagem.Size = new Size(454, 435);
+            txtMensagem.TabIndex = 22;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -964,7 +964,6 @@
         private Button btnEnviar;
         private Label label6;
         private Label label7;
-        private RichTextBox txtMensagem;
         private Button btCancelarOpcoesMensagem;
         private Label lbNovosContatos;
         private Label lbCliqueImportar;
@@ -990,5 +989,6 @@
         private Label label10;
         private Button btnVarNome;
         private CheckBox chkUsarNomeSalvo;
+        private TextBox txtMensagem;
     }
 }
