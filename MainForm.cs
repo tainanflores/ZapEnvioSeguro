@@ -55,7 +55,7 @@ namespace ZapEnvioSeguro
             mensagemTextoEnviando,
             telefoneEnviandoSerialized;
 
-        private const int timeoutSeconds = 25;
+        private const int timeoutSeconds = 30;
 
         public MainForm()
         {
@@ -1309,7 +1309,7 @@ namespace ZapEnvioSeguro
 
                             if (idZap == telefoneEnviando)
                             {
-                                string textoMsgEnviando = mensagemTextoEnviando;
+                                string textoMsgEnviando = mensagemTextoEnviando.Replace("\r","");
 
                                 bool enviouSucesso = true;
 
