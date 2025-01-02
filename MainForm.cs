@@ -1352,7 +1352,7 @@ namespace ZapEnvioSeguro
             try
             {
                 // Carregar todos os contatos do banco para memória
-                var queryTodos = "SELECT Telefone, Nome, PushName, IsBusiness, Id FROM Contatos WHERE IdEmpresa = @IdEmpresa";
+                var queryTodos = "SELECT Telefone, Telefone_Serialized, Nome, PushName, IsBusiness, Id FROM Contatos WHERE IdEmpresa = @IdEmpresa";
                 SqlParameter[] parametersId = new SqlParameter[]
                 {
                     new SqlParameter("@IdEmpresa", Evento.IdEmpresa)
