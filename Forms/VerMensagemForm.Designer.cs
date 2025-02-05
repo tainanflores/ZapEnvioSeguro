@@ -37,14 +37,13 @@
             label4 = new Label();
             lbEnviosSucesso = new Label();
             btnRepetirEnvio = new Button();
-            btnEnviarFalhas = new Button();
-            label7 = new Label();
-            lbEnvioFalha = new Label();
+            btnEnviarPendente = new Button();
             panel2 = new Panel();
             button1 = new Button();
             label3 = new Label();
             panel1 = new Panel();
-            lbNaoPodeRepetir = new Label();
+            lbEnvioPendente = new Label();
+            label8 = new Label();
             panel2.SuspendLayout();
             panel1.SuspendLayout();
             SuspendLayout();
@@ -98,7 +97,7 @@
             // 
             label2.AutoSize = true;
             label2.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label2.Location = new Point(12, 69);
+            label2.Location = new Point(12, 68);
             label2.Name = "label2";
             label2.Size = new Size(172, 25);
             label2.TabIndex = 17;
@@ -118,7 +117,7 @@
             // 
             label4.AutoSize = true;
             label4.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label4.Location = new Point(12, 114);
+            label4.Location = new Point(12, 158);
             label4.Name = "label4";
             label4.Size = new Size(189, 25);
             label4.TabIndex = 19;
@@ -129,7 +128,7 @@
             lbEnviosSucesso.AutoSize = true;
             lbEnviosSucesso.Font = new Font("Segoe UI", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             lbEnviosSucesso.ForeColor = SystemColors.MenuHighlight;
-            lbEnviosSucesso.Location = new Point(207, 114);
+            lbEnviosSucesso.Location = new Point(207, 158);
             lbEnviosSucesso.Name = "lbEnviosSucesso";
             lbEnviosSucesso.Size = new Size(102, 25);
             lbEnviosSucesso.TabIndex = 18;
@@ -142,7 +141,7 @@
             btnRepetirEnvio.FlatStyle = FlatStyle.Popup;
             btnRepetirEnvio.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
             btnRepetirEnvio.ForeColor = SystemColors.Window;
-            btnRepetirEnvio.Location = new Point(536, 572);
+            btnRepetirEnvio.Location = new Point(521, 572);
             btnRepetirEnvio.Name = "btnRepetirEnvio";
             btnRepetirEnvio.Size = new Size(181, 55);
             btnRepetirEnvio.TabIndex = 20;
@@ -150,41 +149,20 @@
             btnRepetirEnvio.UseVisualStyleBackColor = false;
             btnRepetirEnvio.Click += btnRepetirEnvio_Click;
             // 
-            // btnEnviarFalhas
+            // btnEnviarPendente
             // 
-            btnEnviarFalhas.BackColor = Color.IndianRed;
-            btnEnviarFalhas.Cursor = Cursors.Hand;
-            btnEnviarFalhas.FlatStyle = FlatStyle.Popup;
-            btnEnviarFalhas.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnEnviarFalhas.ForeColor = SystemColors.Window;
-            btnEnviarFalhas.Location = new Point(734, 572);
-            btnEnviarFalhas.Name = "btnEnviarFalhas";
-            btnEnviarFalhas.Size = new Size(160, 55);
-            btnEnviarFalhas.TabIndex = 21;
-            btnEnviarFalhas.Text = "Enviar Falhas";
-            btnEnviarFalhas.UseVisualStyleBackColor = false;
-            btnEnviarFalhas.Click += btnEnviarFalhas_Click;
-            // 
-            // label7
-            // 
-            label7.AutoSize = true;
-            label7.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label7.Location = new Point(12, 159);
-            label7.Name = "label7";
-            label7.Size = new Size(165, 25);
-            label7.TabIndex = 23;
-            label7.Text = "Envios com falha:";
-            // 
-            // lbEnvioFalha
-            // 
-            lbEnvioFalha.AutoSize = true;
-            lbEnvioFalha.Font = new Font("Segoe UI", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lbEnvioFalha.ForeColor = Color.IndianRed;
-            lbEnvioFalha.Location = new Point(183, 159);
-            lbEnvioFalha.Name = "lbEnvioFalha";
-            lbEnvioFalha.Size = new Size(102, 25);
-            lbEnvioFalha.TabIndex = 22;
-            lbEnvioFalha.Text = "0 Contatos";
+            btnEnviarPendente.BackColor = Color.IndianRed;
+            btnEnviarPendente.Cursor = Cursors.Hand;
+            btnEnviarPendente.FlatStyle = FlatStyle.Popup;
+            btnEnviarPendente.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnEnviarPendente.ForeColor = SystemColors.Window;
+            btnEnviarPendente.Location = new Point(708, 572);
+            btnEnviarPendente.Name = "btnEnviarPendente";
+            btnEnviarPendente.Size = new Size(196, 55);
+            btnEnviarPendente.TabIndex = 21;
+            btnEnviarPendente.Text = "Enviar Pendentes";
+            btnEnviarPendente.UseVisualStyleBackColor = false;
+            btnEnviarPendente.Click += btnEnviarFalhas_Click;
             // 
             // panel2
             // 
@@ -227,30 +205,39 @@
             // 
             panel1.BackColor = SystemColors.HighlightText;
             panel1.BorderStyle = BorderStyle.Fixed3D;
+            panel1.Controls.Add(lbEnvioPendente);
+            panel1.Controls.Add(label8);
             panel1.Controls.Add(label1);
             panel1.Controls.Add(lbDataEnvio);
-            panel1.Controls.Add(label7);
             panel1.Controls.Add(lbEnvioSolicitado);
-            panel1.Controls.Add(lbEnvioFalha);
             panel1.Controls.Add(label2);
             panel1.Controls.Add(lbEnviosSucesso);
             panel1.Controls.Add(label4);
             panel1.Location = new Point(549, 98);
             panel1.Name = "panel1";
-            panel1.Size = new Size(337, 215);
+            panel1.Size = new Size(337, 219);
             panel1.TabIndex = 25;
             // 
-            // lbNaoPodeRepetir
+            // lbEnvioPendente
             // 
-            lbNaoPodeRepetir.AutoSize = true;
-            lbNaoPodeRepetir.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lbNaoPodeRepetir.ForeColor = Color.IndianRed;
-            lbNaoPodeRepetir.Location = new Point(518, 552);
-            lbNaoPodeRepetir.Name = "lbNaoPodeRepetir";
-            lbNaoPodeRepetir.Size = new Size(390, 17);
-            lbNaoPodeRepetir.TabIndex = 26;
-            lbNaoPodeRepetir.Text = "Esse envio teve uma falha inesperada e não pode ser repetido";
-            lbNaoPodeRepetir.Visible = false;
+            lbEnvioPendente.AutoSize = true;
+            lbEnvioPendente.Font = new Font("Segoe UI", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lbEnvioPendente.ForeColor = Color.ForestGreen;
+            lbEnvioPendente.Location = new Point(190, 113);
+            lbEnvioPendente.Name = "lbEnvioPendente";
+            lbEnvioPendente.Size = new Size(102, 25);
+            lbEnvioPendente.TabIndex = 24;
+            lbEnvioPendente.Text = "0 Contatos";
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label8.Location = new Point(12, 113);
+            label8.Name = "label8";
+            label8.Size = new Size(172, 25);
+            label8.TabIndex = 25;
+            label8.Text = "Envios pendentes:";
             // 
             // VerMensagemForm
             // 
@@ -258,10 +245,9 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.Info;
             ClientSize = new Size(925, 645);
-            Controls.Add(lbNaoPodeRepetir);
             Controls.Add(panel1);
             Controls.Add(panel2);
-            Controls.Add(btnEnviarFalhas);
+            Controls.Add(btnEnviarPendente);
             Controls.Add(btnRepetirEnvio);
             Controls.Add(label6);
             Controls.Add(txtMensagem);
@@ -288,13 +274,12 @@
         private Label label4;
         private Label lbEnviosSucesso;
         private Button btnRepetirEnvio;
-        private Button btnEnviarFalhas;
-        private Label label7;
-        private Label lbEnvioFalha;
+        private Button btnEnviarPendente;
         private Panel panel2;
         private Button button1;
         private Label label3;
         private Panel panel1;
-        private Label lbNaoPodeRepetir;
+        private Label lbEnvioPendente;
+        private Label label8;
     }
 }

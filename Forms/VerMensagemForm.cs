@@ -32,13 +32,12 @@ namespace ZapEnvioSeguro.Forms
                     lbDataEnvio.Text = row["DataEnvio"].ToString();
                     lbEnvioSolicitado.Text = row["QuantidadeContatosSolicitados"].ToString();
                     lbEnviosSucesso.Text = row["QuantidadeContatosSucesso"].ToString();
-                    lbEnvioFalha.Text = (Int32.Parse(row["QuantidadeContatosSolicitados"].ToString()) - Int32.Parse(row["QuantidadeContatosSucesso"].ToString())).ToString();
+                    lbEnvioPendente.Text = (Int32.Parse(row["QuantidadeContatosSolicitados"].ToString()) - Int32.Parse(row["QuantidadeContatosSucesso"].ToString())).ToString();
                     messageId = Int64.Parse(row["Id"].ToString());
 
                     if (row["FalhaInesperada"].ToString() == "True")
                     {
-                        lbNaoPodeRepetir.Visible = true;
-                        btnEnviarFalhas.Enabled = false;
+                        btnEnviarPendente.Enabled = false;
                         btnRepetirEnvio.Enabled = false;
                     }
                 }
@@ -123,16 +122,16 @@ namespace ZapEnvioSeguro.Forms
 
         private async void btnEnviarFalhas_Click(object sender, EventArgs e)
         {
-            if(lbEnvioFalha.Text == "0")
+            if(lbEnvioPendente.Text == "0")
             {
                 MessageBox.Show("Não houve nenhuma falha no envio dessa mensagem", "Aviso",MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;                    
             }
 
-            btnEnviarFalhas.Enabled = false;
+            btnEnviarPendente.Enabled = false;
 
             var result = MessageBox.Show(
-                    $"Deseja reenviar para todos os {lbEnvioFalha.Text} contatos falharam o envio?",
+                    $"Deseja reenviar para todos os {lbEnvioPendente.Text} contatos que estão pendentes?",
                     "Confirmar Envio",
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question

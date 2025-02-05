@@ -61,8 +61,8 @@ namespace ZapEnvioSeguro.Classes
 
         public static string ScriptEnviarMensagem = @"
             (function(){
+                var count = 0;
                 function clickEnviarButton(){
-                    var count = 0;
                     count++
                     console.log(`tentando encontrar Send ${count}`);
                     var enviarButton = document.querySelector('[aria-label=""Enviar""]');
@@ -70,6 +70,7 @@ namespace ZapEnvioSeguro.Classes
                         enviarButton.click();
                         console.log('encontrado e clicado');
                         window.chrome.webview.postMessage('enviarClicado');
+                        return;
                     }
                 }
                 var interval = setInterval(clickEnviarButton, 1000); 
