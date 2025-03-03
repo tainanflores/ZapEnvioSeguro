@@ -7,6 +7,6 @@ public class MensagemEnviada
     public int TelefoneId { get; set; } // ID do telefone que tentou enviar
     public required DateTime? DataEnvio { get; set; } // Data do envio da Mensagem
     public required long IdEmpresa { get; set; } // ID da empresa associada
-    public required bool SucessoEnviada { get; set; } // Indica se a mensagem foi enviada
+    public string? SucessoEnviada { get; set; } // Indica se a mensagem foi enviada
 
 }

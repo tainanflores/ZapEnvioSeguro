@@ -61,6 +61,7 @@
             label1 = new Label();
             txtBusca = new TextBox();
             tabEnviarMsg = new TabPage();
+            txtMensagem = new TextBox();
             chkUsarNomeSalvo = new CheckBox();
             label10 = new Label();
             btnVarNome = new Button();
@@ -90,7 +91,6 @@
             label14 = new Label();
             txtBuscaMsg = new TextBox();
             sqlCommand1 = new Microsoft.Data.SqlClient.SqlCommand();
-            txtMensagem = new TextBox();
             tabControl1.SuspendLayout();
             tabWhatsApp.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)webView21).BeginInit();
@@ -385,6 +385,7 @@
             // cmbZapOrigem
             // 
             cmbZapOrigem.BackColor = SystemColors.ButtonFace;
+            cmbZapOrigem.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbZapOrigem.Location = new Point(850, 12);
             cmbZapOrigem.Name = "cmbZapOrigem";
             cmbZapOrigem.Size = new Size(148, 25);
@@ -537,6 +538,18 @@
             tabEnviarMsg.Size = new Size(1256, 651);
             tabEnviarMsg.TabIndex = 2;
             tabEnviarMsg.Text = "Enviar Mensagem";
+            // 
+            // txtMensagem
+            // 
+            txtMensagem.AcceptsReturn = true;
+            txtMensagem.AcceptsTab = true;
+            txtMensagem.Cursor = Cursors.IBeam;
+            txtMensagem.Location = new Point(29, 43);
+            txtMensagem.Multiline = true;
+            txtMensagem.Name = "txtMensagem";
+            txtMensagem.ScrollBars = ScrollBars.Vertical;
+            txtMensagem.Size = new Size(454, 435);
+            txtMensagem.TabIndex = 22;
             // 
             // chkUsarNomeSalvo
             // 
@@ -879,18 +892,6 @@
             // 
             sqlCommand1.CommandTimeout = 30;
             sqlCommand1.EnableOptimizedParameterBinding = false;
-            // 
-            // txtMensagem
-            // 
-            txtMensagem.AcceptsReturn = true;
-            txtMensagem.AcceptsTab = true;
-            txtMensagem.Cursor = Cursors.IBeam;
-            txtMensagem.Location = new Point(29, 43);
-            txtMensagem.Multiline = true;
-            txtMensagem.Name = "txtMensagem";
-            txtMensagem.ScrollBars = ScrollBars.Vertical;
-            txtMensagem.Size = new Size(454, 435);
-            txtMensagem.TabIndex = 22;
             // 
             // MainForm
             // 

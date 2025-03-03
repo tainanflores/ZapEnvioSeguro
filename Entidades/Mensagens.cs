@@ -6,6 +6,7 @@ public class Mensagens
     public required string Mensagem { get; set; } // Mensagem enviada
     public required DateTime DataEnvio { get; set; } // Data do envio da Mensagem
     public required long QuantidadeContatosSolicitados { get; set; }
+    public required long QuantidadeContatosPendentes { get; set; }
     public long QuantidadeContatosSucesso { get; set; }
     public required long IdEmpresa { get; set; } // ID da empresa associada
     public bool FalhaInesperada { get; set; }
