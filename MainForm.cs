@@ -2398,7 +2398,7 @@ namespace ZapEnvioSeguro
         public async Task LoadMessages()
         {
             var query = $"SELECT " +
-                 $"Id, Mensagem, DataEnvio, QuantidadeContatosSolicitados, QuantidadeContatosSucesso, IdEmpresa " +
+                 $"Id, Mensagem, DataEnvio, QuantidadeContatosSolicitados, QuantidadeContatosSucesso,QuantidadeContatosPendentes, IdEmpresa " +
                  $"FROM " +
                  $"Mensagens " +
                  $"WHERE IdEmpresa = @IdEmpresa";
