@@ -51,6 +51,7 @@
             txtEmail = new TextBox();
             txtPassword = new TextBox();
             btnLogin = new Button();
+            lbconectando = new Label();
             panel2.SuspendLayout();
             panelLogin.SuspendLayout();
             panelUpdate.SuspendLayout();
@@ -95,6 +96,7 @@
             // 
             // panelLogin
             // 
+            panelLogin.Controls.Add(lbconectando);
             panelLogin.Controls.Add(panel2);
             panelLogin.Controls.Add(panelUpdate);
             panelLogin.Controls.Add(labelVersion);
@@ -123,7 +125,7 @@
             panelUpdate.Controls.Add(lbStatusUpdate);
             panelUpdate.Controls.Add(lbTituloAtu);
             panelUpdate.Controls.Add(progressBarUpdate);
-            panelUpdate.Location = new Point(12, 166);
+            panelUpdate.Location = new Point(69, 72);
             panelUpdate.Name = "panelUpdate";
             panelUpdate.Size = new Size(310, 153);
             panelUpdate.TabIndex = 13;
@@ -307,6 +309,19 @@
             btnLogin.UseVisualStyleBackColor = false;
             btnLogin.Click += btnLogin_Click;
             // 
+            // lbconectando
+            // 
+            lbconectando.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            lbconectando.AutoSize = true;
+            lbconectando.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lbconectando.ForeColor = Color.ForestGreen;
+            lbconectando.Location = new Point(185, 284);
+            lbconectando.Name = "lbconectando";
+            lbconectando.Size = new Size(114, 21);
+            lbconectando.TabIndex = 24;
+            lbconectando.Text = "Conectando...";
+            lbconectando.Visible = false;
+            // 
             // LoginForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -337,14 +352,6 @@
         private Label label4;
         private Button button1;
         private Panel panelLogin;
-        private Panel panelUpdate;
-        private Label lbNovaVersaoUpdate;
-        private Label lbVersaoAtualUpdate;
-        private Label label6;
-        private Label label5;
-        private Label lbStatusUpdate;
-        private Label lbTituloAtu;
-        public ProgressBar progressBarUpdate;
         private Label labelVersion;
         private PictureBox pictureBox1;
         private CheckBox chkVerSenha;
@@ -355,5 +362,14 @@
         private TextBox txtEmail;
         private TextBox txtPassword;
         private Button btnLogin;
+        private Panel panelUpdate;
+        private Label lbNovaVersaoUpdate;
+        private Label lbVersaoAtualUpdate;
+        private Label label6;
+        private Label label5;
+        private Label lbStatusUpdate;
+        private Label lbTituloAtu;
+        public ProgressBar progressBarUpdate;
+        private Label lbconectando;
     }
 }

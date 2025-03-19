@@ -35,11 +35,11 @@ namespace ZapEnvioSeguro.Forms
                     lbEnvioPendente.Text = (Int32.Parse(row["QuantidadeContatosSolicitados"].ToString()) - Int32.Parse(row["QuantidadeContatosSucesso"].ToString())).ToString();
                     messageId = Int64.Parse(row["Id"].ToString());
 
-                    if (row["FalhaInesperada"].ToString() == "True")
-                    {
-                        btnEnviarPendente.Enabled = false;
-                        btnRepetirEnvio.Enabled = false;
-                    }
+                    //if (row["FalhaInesperada"].ToString() == "True")
+                    //{
+                    //    btnEnviarPendente.Enabled = false;
+                    //    btnRepetirEnvio.Enabled = false;
+                    //}
                 }
                 else
                 {
@@ -153,7 +153,7 @@ namespace ZapEnvioSeguro.Forms
             SqlParameter[] sp = new SqlParameter[]
             {
                 new SqlParameter("@MensagemId", messageId),
-                new SqlParameter("@SucessoEnviada", false)
+                new SqlParameter("@SucessoEnviada", "PENDENTE")
             };
 
             var dataTable = await dbHelper.ExecuteQueryAsync(query, sp);

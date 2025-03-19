@@ -25,21 +25,21 @@ namespace ZapEnvioSeguro
             
             ApplicationConfiguration.Initialize();
 
-            DateTime dataLocal = DateTime.Now;
-            DateTime dataOnline = ObterDataOnline();
+            //DateTime dataLocal = DateTime.Now;
+            //DateTime dataOnline = ObterDataOnline();
 
-            if (dataOnline == new DateTime(2001, 1, 1, 0,0,0))
-            {
-                Environment.Exit(1);
-            }
+            //if (dataOnline == new DateTime(2001, 1, 1, 0,0,0))
+            //{
+            //    Environment.Exit(1);
+            //}
 
-            int toleranciaEmMinutos = 30;
+            //int toleranciaEmMinutos = 30;
 
-            if (!EstaoAproximadas(dataLocal, dataOnline, toleranciaEmMinutos))
-            {
-                MessageBox.Show("Por favor, atualize a data do dipositivo antes de continuar.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Environment.Exit(1);
-            }
+            //if (!EstaoAproximadas(dataLocal, dataOnline, toleranciaEmMinutos))
+            //{
+            //    MessageBox.Show("Por favor, atualize a data do dipositivo antes de continuar.", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            //    Environment.Exit(1);
+            //}
 
             var loginForm = new LoginForm();
             if (loginForm.ShowDialog() == DialogResult.OK) // Somente se o login for bem-sucedido

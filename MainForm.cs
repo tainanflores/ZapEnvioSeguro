@@ -1843,7 +1843,7 @@ namespace ZapEnvioSeguro
 
                 }
 
-                query = "SELECT COUNT(*) FROM MensagemEnviada WHERE MensagemId = @MensagemId AND SucessoEnviada = 1";
+                query = "SELECT COUNT(*) FROM MensagemEnviada WHERE MensagemId = @MensagemId AND SucessoEnviada = 'ENVIADA'";
 
                 parameters = new SqlParameter[]
                 {
@@ -1911,10 +1911,10 @@ namespace ZapEnvioSeguro
                 var batchQueries = new List<Tuple<string, SqlParameter[]>>();
 
                 int currentBatch = 0;  // Contador de lotes processados
+                ProgressForm progressForm = new ProgressForm();
 
                 for (int i = 0; i < total; i++)
                 {
-                    ProgressForm progressForm = new ProgressForm();
                     progressForm.CenterToParentForm(this);
                     progressForm.SetMin(0);
                     progressForm.SetMax(100);
@@ -1964,6 +1964,8 @@ namespace ZapEnvioSeguro
                 lbCliqueImportar.Visible = false;
                 lbAnalisandoContatos.Visible = false;
                 btnSincronizarContatos.Enabled = false;
+                progressForm.Dispose();
+                progressForm.Close();
                 return;
 
             }
@@ -2015,6 +2017,11 @@ namespace ZapEnvioSeguro
 
                     var idMensagem = await dbHelper.ExecuteScalarAsync(query, parameters);
                     mensagemIdEnviando = Convert.ToInt64(idMensagem);
+
+                    contatosSelecionadosParaEnvio = contatosEnviar;
+
+                    await prepararMensagens();
+
                 }
                 else
                 {
