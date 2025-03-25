@@ -33,6 +33,7 @@
             button1 = new Button();
             label4 = new Label();
             panelLogin = new Panel();
+            lbconectando = new Label();
             panelUpdate = new Panel();
             lbNovaVersaoUpdate = new Label();
             lbVersaoAtualUpdate = new Label();
@@ -51,7 +52,6 @@
             txtEmail = new TextBox();
             txtPassword = new TextBox();
             btnLogin = new Button();
-            lbconectando = new Label();
             panel2.SuspendLayout();
             panelLogin.SuspendLayout();
             panelUpdate.SuspendLayout();
@@ -115,6 +115,19 @@
             panelLogin.Size = new Size(334, 330);
             panelLogin.TabIndex = 14;
             // 
+            // lbconectando
+            // 
+            lbconectando.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            lbconectando.AutoSize = true;
+            lbconectando.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lbconectando.ForeColor = Color.ForestGreen;
+            lbconectando.Location = new Point(185, 284);
+            lbconectando.Name = "lbconectando";
+            lbconectando.Size = new Size(114, 21);
+            lbconectando.TabIndex = 24;
+            lbconectando.Text = "Conectando...";
+            lbconectando.Visible = false;
+            // 
             // panelUpdate
             // 
             panelUpdate.BackColor = Color.MidnightBlue;
@@ -125,7 +138,7 @@
             panelUpdate.Controls.Add(lbStatusUpdate);
             panelUpdate.Controls.Add(lbTituloAtu);
             panelUpdate.Controls.Add(progressBarUpdate);
-            panelUpdate.Location = new Point(69, 72);
+            panelUpdate.Location = new Point(12, 166);
             panelUpdate.Name = "panelUpdate";
             panelUpdate.Size = new Size(310, 153);
             panelUpdate.TabIndex = 13;
@@ -308,19 +321,6 @@
             btnLogin.Text = "Entrar";
             btnLogin.UseVisualStyleBackColor = false;
             btnLogin.Click += btnLogin_Click;
-            // 
-            // lbconectando
-            // 
-            lbconectando.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            lbconectando.AutoSize = true;
-            lbconectando.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lbconectando.ForeColor = Color.ForestGreen;
-            lbconectando.Location = new Point(185, 284);
-            lbconectando.Name = "lbconectando";
-            lbconectando.Size = new Size(114, 21);
-            lbconectando.TabIndex = 24;
-            lbconectando.Text = "Conectando...";
-            lbconectando.Visible = false;
             // 
             // LoginForm
             // 
