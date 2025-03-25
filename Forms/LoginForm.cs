@@ -106,10 +106,11 @@ namespace ZapEnvioSeguro.Forms {
                 if (!loginSuccess)
                 {
                     MessageBox.Show("Falha no login.");
+                    this.Enabled = true;
                     btnLogin.Enabled = true;
                     lbconectando.Visible = false;
-                    btnLogin.Visible = false;
-                    btnCadastro.Visible = false;
+                    btnLogin.Visible = true;
+                    btnCadastro.Visible = true;
                 }
                 else
                 {
@@ -124,8 +125,11 @@ namespace ZapEnvioSeguro.Forms {
 
                 if (ex.Message == "Senha incorreta.") txtPassword.Clear();
                 MessageBox.Show($"{ex.Message}");
-
                 this.Enabled = true;
+                btnLogin.Enabled = true;
+                lbconectando.Visible = false;
+                btnLogin.Visible = true;
+                btnCadastro.Visible = true;
             }
         }
 
